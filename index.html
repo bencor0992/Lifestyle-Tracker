@@ -754,11 +754,38 @@ function drawSpriteBackdrop(c){
   paint(c,11,13,33,2,'#bb7594');paint(c,194,13,34,2,'#8973b4');
 }
 
-function drawFocusProgress(c,level){
+function levelEnergy(level){return Math.max(0,Math.min(1,((Number(level)||1)-1)/14));}
+function idleMotion(stats,time=0){
+  // Each attribute influences a different part of the same idle loop:
+  // Health = breathing, Stamina = pace and posture, Focus = alertness.
+  const health=levelEnergy(stats.health.level),stamina=levelEnergy(stats.stamina.level),focus=levelEnergy(stats.focus.level);
+  const energy=.28*health+.54*stamina+.18*focus;
+  const beat=time*Math.PI*2*(.19+.49*energy);
+  const inhale=Math.sin(beat);
+  const lift=(.15+2.6*stamina)*Math.max(0,Math.sin(beat+.25));
+  const fatigue=(1-stamina)*(1.35+.75*Math.sin(beat*.55-.65));
+  return {
+    energy,stamina,health,focus,
+    y:fatigue-lift,
+    lean:(1-energy)*.023+Math.sin(beat*.5)*(.003+.012*energy),
+    xScale:1+inhale*(.003+.009*health),
+    yScale:1+inhale*(.002+.005*health),
+  };
+}
+function applyIdlePose(c,stats,time=0){
+  const pose=idleMotion(stats,time);
+  // Anchor the motion near the shoes, keeping feet within the stage.
+  c.translate(129,270+pose.y);
+  c.rotate(pose.lean);
+  c.scale(pose.xScale,pose.yScale);
+  c.translate(-129,-270);
+}
+
+function drawFocusProgress(c,level,time=0){
   const f=visualPower(level),weak=1-f;
   // Thought clutter disappears as Focus improves, independently of physique.
   if(f<.35){
-    const x=72,y=73;
+    const x=72+Math.round(Math.sin(time*.6)*2),y=73+Math.round(Math.sin(time*.9)*2);
     c.lineWidth=2.3;c.lineJoin='miter';c.lineCap='square';
     c.strokeStyle=f<.1?'#d4aac8':'#96829f';
     c.beginPath();c.moveTo(x,y+2);c.lineTo(x-5,y-4);c.lineTo(x+3,y-8);
@@ -771,18 +798,26 @@ function drawFocusProgress(c,level){
     // These sit outside the silhouette, so they never duplicate the face.
     const glints=[[181,57],[77,108],[197,130],[60,157],[190,188],[84,48],[202,93]];
     for(let i=0;i<Math.min(glints.length,Math.ceil(f*7));i++){
-      const [x,y]=glints[i],glow=i%2?'#a18bd4':'#dcc2ff';
+      const [x,y]=glints[i],glow=Math.sin(time*(2+i*.35)+i)>-.15?(i%2?'#a18bd4':'#dcc2ff'):'#8c7aa7';
       paint(c,x,y,3,7,glow);paint(c,x-3,y+3,9,2,glow);
     }
   }
 }
 
-function drawFocusFace(c,level,stage=0){
+function drawFocusFace(c,level,stage=0,time=0){
   // Draw directly on the existing face. The older full portrait atlas included
   // a second head/neck at a different scale and caused doubled-face artifacts.
   const f=visualPower(level);
   const eye='#302934';
   const eyeX=[143,129,133,128][stage],eyeY=[65,63,63,63][stage];
+  const blinkPeriod=3.7+(1-f)*1.8;
+  const blinkPhase=((time+1.1)%blinkPeriod)/blinkPeriod;
+  const drowsy=f<.16&&Math.sin(time*.72)>.92;
+  if(blinkPhase>.95||drowsy){
+    // A full blink closes the same two eyes: no extra face is drawn.
+    paint(c,eyeX,eyeY,6,2,eye);paint(c,eyeX+11,eyeY,6,2,eye);
+    return;
+  }
   if(f<.27){
     paint(c,eyeX,eyeY,6,2,eye);paint(c,eyeX+11,eyeY+1,6,2,eye);
     if(f<.1){paint(c,eyeX-2,eyeY+5,3,2,'#a16b68');paint(c,eyeX+16,eyeY+5,3,2,'#a16b68');}
@@ -794,19 +829,21 @@ function drawFocusFace(c,level,stage=0){
   }
 }
 
-function drawStaminaProgress(c,level){
+function drawStaminaProgress(c,level,time=0){
   const s=visualPower(level);
   if(s<.32){
     // Slow breath puffs make the exhausted starting state visible.
     const col=s<.09?'#c8aebd':'#9b8b9d';
-    paint(c,171,90,7,3,col);paint(c,179,86,7,3,col);
-    paint(c,186,83,3,3,col);
-    if(s<.16){paint(c,174,98,5,2,'#b18fa9');}
+    const exhale=Math.max(0,Math.sin(time*1.35));
+    const drift=Math.round(exhale*6);
+    paint(c,171+drift,90-2*exhale,7,3,col);paint(c,179+drift,86-3*exhale,7,3,col);
+    paint(c,186+drift,83-4*exhale,3,3,col);
+    if(s<.16){paint(c,174+drift,98-2*exhale,5,2,'#b18fa9');}
   }
   if(s>.3){
     const lines=Math.floor(s*4);
     for(let i=0;i<lines;i++){
-      const x=178+i*8,y=125-i*17;
+      const x=178+i*8,y=125-i*17+Math.round(Math.sin(time*2.6+i)*2*s);
       paint(c,x,y,3,8,i%2?'#ecc18d':'#83d2d2');
       paint(c,x-3,y+4,9,2,i%2?'#ecc18d':'#83d2d2');
     }
@@ -840,12 +877,14 @@ function companionBounds(atlas,index){
   };
   companionArtBounds.set(index,b);return b;
 }
-function drawStageCompanion(c,item){
+function drawStageCompanion(c,item,time=0){
   const flying=['bird','owl'].includes(item.shape);
   const mythical=['dragon','griffin'].includes(item.shape);
   const maxW=mythical?94:flying?72:84,maxH=mythical?101:flying?75:83;
   const right=mythical?101:95,bottom=flying?251:283;
   const atlas=loadedAtlas('hero-companion-atlas'),index=COMPANION_ORDER.indexOf(item.id);
+  c.save();
+  c.translate(0,Math.sin(time*(flying?2.2:1.45)+index*.75)*(flying?3:mythical?2:1));
   if(atlas&&index>=0){
     const b=companionBounds(atlas,index);
     const scale=Math.min(maxW/b.sw,maxH/b.sh);
@@ -857,13 +896,14 @@ function drawStageCompanion(c,item){
     drawPet(c,item,9,28,1);
     c.restore();
   }
+  c.restore();
   if(!flying){paint(c,17,284,64,2,'#201723');paint(c,25,286,48,2,'#493448');}
 }
 function heroArmorHasCape(item){
   return !!item&&(['cloak','mantle','regent'].includes(item.shape)||item.rarity==='legendary'&&['plate','carapace','aegis'].includes(item.shape));
 }
 
-function drawSpriteHero(c,stats,armor,weapon,shield,pet){
+function drawSpriteHero(c,stats,armor,weapon,shield,pet,time=0){
   const atlas=loadedAtlas('hero-health-atlas');
   if(!atlas)return false;
   const health=Math.max(1,Number(stats.health.level)||1),s=visualPower(stats.stamina.level);
@@ -874,15 +914,16 @@ function drawSpriteHero(c,stats,armor,weapon,shield,pet){
   drawSpriteBackdrop(c);
   // Companion and cape are behind the hero. Foreground gear uses the same
   // transformation as the body so it follows each Stamina posture.
-  if(pet)drawStageCompanion(c,pet);
+  if(pet)drawStageCompanion(c,pet,time);
   c.save();
+  applyIdlePose(c,stats,time);
   // Low Stamina hunches the same body sprite forward; each stamina level reduces the lean.
   c.translate(127,274);c.transform(1,0,-.16*(1-s),1,0,0);c.translate(-127,-274);
   c.translate(129,0);c.scale(scaleX,1);c.translate(-129,0);
   if(heroArmorHasCape(armor))cloak(c,armor,s,visualPower(health));
   const w=atlas.naturalWidth/2,h=atlas.naturalHeight/2;
   c.drawImage(atlas,(stage%2)*w,Math.floor(stage/2)*h,w,h,(stage%2)*40,28+7*(1-s),240,257-7*(1-s));
-  drawFocusFace(c,stats.focus.level,stage);
+  drawFocusFace(c,stats.focus.level,stage,time);
   if(armor)drawArmorV5(c,armor,129,105,27+Math.round(visualPower(health)*7),20,true);
   if(shield){
     drawShieldV5(c,shield,88,148,.94);
@@ -900,23 +941,27 @@ function drawSpriteHero(c,stats,armor,weapon,shield,pet){
   }
   if(armor&&(['plate','halfplate','splint','aegis','regent'].includes(armor.shape)||armor.group==='Heavy Armor'&&armor.rarity==='legendary'))drawHelmetV5(c,[151,130,137,134][stage],61,armor);
   c.restore();
-  drawStaminaProgress(c,stats.stamina.level);
-  drawFocusProgress(c,stats.focus.level);
+  drawStaminaProgress(c,stats.stamina.level,time);
+  drawFocusProgress(c,stats.focus.level,time);
   return true;
 }
 
-function drawHero(canvas,stats,equipment) {
+function drawHero(canvas,stats,equipment,time=0) {
   if(!canvas)return;
-  canvas.width=240;canvas.height=320;
+  if(canvas.width!==240)canvas.width=240;
+  if(canvas.height!==320)canvas.height=320;
   const c=canvas.getContext('2d');if(!c)return;
+  c.clearRect(0,0,240,320);
   c.imageSmoothingEnabled=false;
   const h=visualPower(stats.health.level),s=visualPower(stats.stamina.level),f=visualPower(stats.focus.level);
   const weapon=HERO_INDEX[equipment.weapon],armor=HERO_INDEX[equipment.armor],pet=HERO_INDEX[equipment.companion],shield=HERO_INDEX[equipment.shield];
-  if(drawSpriteHero(c,stats,armor,weapon,shield,pet))return canvas;
+  if(drawSpriteHero(c,stats,armor,weapon,shield,pet,time))return canvas;
   backdrop(c,h,s,f);
   if(heroArmorHasCape(armor))cloak(c,armor,s,h);
-  if(pet) drawStageCompanion(c,pet);
+  if(pet) drawStageCompanion(c,pet,time);
+  c.save();applyIdlePose(c,stats,time);
   drawCharacter(c,h,s,f,armor,weapon,shield);
+  c.restore();
   return canvas;
 }
 
@@ -1930,12 +1975,40 @@ function syncDay(){
   if(missed){save();showToast('Daily stat update applied');}
 }
 
+// One animation loop for the visible hero. Navigation destroys the canvas, so
+// always cancel the old loop before rendering a new screen.
+let heroIdleFrame=0,heroIdleCanvas=null,heroIdleStartedAt=0,heroIdleLastDraw=-Infinity;
+const reducedMotion=typeof window.matchMedia==='function'?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
+function stopHeroIdle(){
+  if(heroIdleFrame&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(heroIdleFrame);
+  heroIdleFrame=0;heroIdleCanvas=null;
+}
+function animateHeroIdle(timestamp){
+  if(document.hidden||!heroIdleCanvas||heroIdleCanvas.isConnected===false){stopHeroIdle();return;}
+  if(timestamp-heroIdleLastDraw>=1000/24){
+    drawHero(heroIdleCanvas,activeStats(),activeEquipment(),(timestamp-heroIdleStartedAt)/1000);
+    heroIdleLastDraw=timestamp;
+  }
+  heroIdleFrame=requestAnimationFrame(animateHeroIdle);
+}
+function startHeroIdle(canvas){
+  stopHeroIdle();
+  if(!canvas)return;
+  drawHero(canvas,activeStats(),activeEquipment(),0);
+  if(document.hidden||reducedMotion?.matches||typeof requestAnimationFrame!=='function')return;
+  heroIdleCanvas=canvas;
+  heroIdleStartedAt=typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
+  heroIdleLastDraw=-Infinity;
+  heroIdleFrame=requestAnimationFrame(animateHeroIdle);
+}
+
 function render(){
+  stopHeroIdle();
   document.body.dataset.theme=state.theme;
   walletTop.textContent=amount(state.wallet);
   const views={status:renderStatus,missions:renderMissions,hero:renderHero,shop:renderShop,settings:renderSettings};
   screen.innerHTML=views[activeTab]();
-  if(activeTab==='hero'||activeTab==='status')drawHero(document.getElementById('hero-canvas'),activeStats(),activeEquipment());
+  if(activeTab==='hero'||activeTab==='status')startHeroIdle(document.getElementById('hero-canvas'));
   if(activeTab==='hero'){
     document.querySelectorAll('canvas[data-item]').forEach(canvas=>drawItemIcon(canvas,HERO_INDEX[canvas.dataset.item]));
   }
@@ -2160,7 +2233,8 @@ importFile.addEventListener('change',async()=>{
   }catch{alert('Invalid Lifestyle Tracker backup. Your data was not changed.');}
   finally{importFile.value='';}
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncDay();render();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopHeroIdle();else{syncDay();render();}});
+reducedMotion?.addEventListener?.('change',()=>render());
 setInterval(()=>{if(dateKey()!==activeDate){syncDay();render();}},60000);
 syncDay();save();render();
 for(const id of ['hero-health-atlas','hero-focus-atlas','hero-companion-atlas']){
