@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#130d18">
-  <meta name="description" content="A pixel-art lifestyle RPG. Walk your home, track Health, Stamina and Focus, complete tasks, and decorate with earned rewards.">
+  <meta name="description" content="A pixel-art hero lifestyle tracker. Improve Health, Stamina and Focus, finish missions, collect weapons, armor and companions.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Lifestyle">
-  <title>Lifestyle / Player Progression</title>
+  <title>Lifestyle Hero / Player Progression</title>
   <style>
 /* Theme tokens are deliberately independent from layout and tracking logic. */
 :root {
@@ -211,6 +211,77 @@ button { touch-action: manipulation; }
 @media (max-width:360px) { .stat-card { grid-template-columns:89px 1fr; padding:14px 10px; gap:10px; } .ring-wrap { width:88px; } .stat-label { font-size:18px; } .stat-actions .action-btn { font-size:11px; padding:10px 9px; } .screen { padding:22px 13px 125px; } .wallet-pill { padding:8px; } .brand-text strong { font-size:14px; } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
 
+/* Hero alternate: deliberately spare copy and a full-body, original pixel-art character. */
+.screen { padding-top:22px; }
+.hero-stage { width:min(100%,430px); margin:15px auto 24px; }
+.hero-stage.compact { width:min(100%,350px); margin:15px auto 24px; }
+.hero-canvas-frame { position:relative; border:2px solid #65455f; border-radius:12px; overflow:hidden; background:#171120; box-shadow:0 12px 0 #100e19,0 25px 45px #090710a8,inset 0 0 35px #70425d40; }
+.hero-canvas-frame:before { content:""; pointer-events:none; position:absolute; inset:0; border:8px solid #ffffff06; }
+#hero-canvas { display:block; width:100%; height:auto; image-rendering:pixelated; }
+.hero-stage.compact #hero-canvas { max-height:365px; object-fit:contain; }
+.stage-upper,.stage-bottom { position:absolute; left:0; right:0; display:flex; justify-content:space-between; gap:10px; padding:12px 14px; background:#130f1dc9; font-size:11px; color:#f4cade; font-weight:900; letter-spacing:.07em; z-index:1; }
+.stage-upper { top:0; border-bottom:1px solid #ffffff16; }
+.stage-bottom { bottom:0; border-top:1px solid #ffffff16; color:#d1bfcb; }
+.stage-upper .stage-live { color:#8bdac6; }
+.stage-attributes { display:flex; margin:18px auto 0; justify-content:center; gap:6px; }
+.stage-attributes span { flex:1; text-align:center; border:1px solid #564156; background:linear-gradient(155deg,#312038,#1d1729); border-radius:6px; padding:10px; color:#e7c5d7; font-weight:900; }
+.stage-attributes span:nth-child(1) { color:#f3a0bf; }
+.stage-attributes span:nth-child(2) { color:#80d9cf; }
+.stage-attributes span:nth-child(3) { color:#a68af0; }
+.hero-stage.compact .stage-attributes { max-width:300px; }
+.stat-card { min-height:145px; }
+.stat-meta .stat-label { margin-bottom:8px; }
+.stat-meta .stat-level { margin-top:0; }
+.stat-card .stat-actions { margin-top:11px; }
+.stat-card .action-btn { font-size:12px; }
+.quarter-count { font-size:15px; font-variant-numeric:tabular-nums; }
+.equip-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.equip-slot { background:linear-gradient(150deg,#291b30,#191522); border:1px solid #553b54; padding:10px 7px; border-radius:7px; min-width:0; }
+.slot-label { color:#b8a4b7; font-size:10px; font-weight:900; letter-spacing:.06em; text-align:center; }
+.slot-content { display:flex; flex-direction:column; align-items:center; gap:7px; min-height:129px; margin-top:9px; }
+.slot-content canvas { width:69px; height:69px; image-rendering:pixelated; border:1px solid #5e3d60; border-radius:4px; }
+.empty-slot-icon { display:grid; place-items:center; width:69px; height:69px; font-size:35px; color:#5f4a63; border:1px dashed #5f4a63; border-radius:4px; }
+.slot-text { width:100%; text-align:center; }
+.slot-text strong { display:block; font-size:12px; line-height:1.3; overflow-wrap:anywhere; }
+.slot-text small { display:block; font-size:10px; margin-top:4px; }
+.equip-slot .action-btn { width:100%; min-height:35px; padding:7px 3px; font-size:10px; }
+.hero-inventory { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.inventory-card { display:grid; grid-template-columns:63px 1fr; grid-template-rows:1fr auto; gap:3px 10px; border:1px solid #45324a; border-radius:6px; background:#241b2b; color:var(--text); padding:10px; text-align:left; min-width:0; }
+.inventory-card.equipped { border-color:#e797b5; background:#372034; }
+.inventory-card canvas { grid-row:1/3; width:62px; height:62px; image-rendering:pixelated; }
+.inventory-card strong { display:block; font-size:12px; }
+.inventory-card small { display:block; font-size:10px; margin-top:5px; text-transform:uppercase; }
+.inventory-card em { font-size:10px; font-weight:900; color:#eda8bf; font-style:normal; }
+.store-balance { display:flex; justify-content:space-between; align-items:center; margin:19px 0 14px; background:linear-gradient(120deg,#302039,#1d1525); border:1px solid #593d59; padding:16px; border-radius:8px; }
+.store-balance span { color:#bdabba; font-size:12px; letter-spacing:.08em; font-weight:900; }
+.store-balance strong { font-family:Impact,"Arial Black",sans-serif; font-size:32px; font-variant-numeric:tabular-nums; color:#f1a0bd; }
+.store-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin:14px 0 20px; }
+.store-tab { min-height:44px; border:1px solid #4a3c52; border-radius:5px; background:#251c2f; color:#baafbf; font-size:11px; font-weight:900; }
+.store-tab.active { background:linear-gradient(140deg,#d38cab,#9676c3); color:#1b1520; border-color:#f2b1d0; }
+.rarity-heading { display:flex; justify-content:space-between; align-items:center; margin:20px 0 9px; color:#bec5cf; border-bottom:1px solid #45404b; padding-bottom:8px; font-size:12px; font-weight:900; letter-spacing:.12em; }
+.rarity-heading.rare { color:#77d9f5; border-color:#396c93; }
+.rarity-heading.epic { color:#d7a7ff; border-color:#73479b; }
+.rarity-heading.legendary { color:#ffd387; border-color:#9d5f35; }
+.rarity-heading span:last-child { font-size:10px; color:var(--muted); }
+.catalog-list { display:grid; grid-template-columns:1fr; gap:8px; }
+.catalog-card { display:grid; grid-template-columns:80px minmax(0,1fr) 75px; align-items:center; gap:10px; padding:9px; background:linear-gradient(120deg,#251d2d,#1b1723); border:1px solid #4c414f; border-left:3px solid #a1aab4; border-radius:6px; }
+.catalog-card.rarity-rare { border-left-color:#6dcaf4; }
+.catalog-card.rarity-epic { border-left-color:#ba88ea; }
+.catalog-card.rarity-legendary { border-left-color:#ffd17b; background:linear-gradient(120deg,#39261f,#201921); }
+.catalog-art canvas { width:80px; height:80px; display:block; image-rendering:pixelated; }
+.catalog-info { min-width:0; }
+.catalog-name { font-size:14px; font-weight:900; line-height:1.2; overflow-wrap:anywhere; }
+.rarity-text { font-size:11px; font-weight:900; color:#bfc5cf; }
+.rarity-text.rare { color:#78dcfb; }
+.rarity-text.epic { color:#d2a3fa; }
+.rarity-text.legendary { color:#ffd17b; }
+.catalog-price { color:#f0aec3; font-weight:900; margin-top:8px; font-size:15px; font-variant-numeric:tabular-nums; }
+.catalog-button { min-height:42px; font-size:11px; padding:10px 4px; }
+.catalog-button:disabled { opacity:.53; }
+.settings-panel .fine-print { margin-top:14px; }
+@media (min-width:700px) { .hero-stage.compact { width:min(100%,430px); } .hero-stage.compact #hero-canvas { max-height:none; } .catalog-list { grid-template-columns:repeat(2,minmax(0,1fr)); } .hero-inventory { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:390px) { .catalog-card { grid-template-columns:66px minmax(0,1fr) 65px; gap:7px; padding:7px; } .catalog-art canvas { width:66px; height:66px; } .catalog-name { font-size:12px; } .catalog-button { font-size:10px; } .store-tab { font-size:10px; } .inventory-card { grid-template-columns:52px 1fr; padding:7px; gap:6px; } .inventory-card canvas { width:52px; height:52px; } .equip-slot { padding:8px 5px; } .slot-text strong { font-size:11px; } }
+
   </style>
 </head>
 <body data-theme="sunset">
@@ -218,7 +289,7 @@ button { touch-action: manipulation; }
     <header class="topbar">
       <div class="brand" aria-label="Lifestyle Tracker">
         <span class="brand-emblem">LT<span class="emblem-dot">.</span></span>
-        <span class="brand-text"><strong>LIFESTYLE</strong><small>TRACKER // 02</small></span>
+        <span class="brand-text"><strong>LIFESTYLE</strong><small>HERO // 01</small></span>
       </div>
       <div class="wallet-pill" title="Virtual cash earned from tasks">
         <span class="wallet-icon">$</span>
@@ -235,8 +306,8 @@ button { touch-action: manipulation; }
       <button class="nav-item" type="button" data-tab="missions">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>MISSIONS</span>
       </button>
-      <button class="nav-item" type="button" data-tab="home">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v9H3z"/><path d="M9 20v-7h6v7"/></svg><span>HOME</span>
+      <button class="nav-item" type="button" data-tab="hero">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 5 6v7c0 5 4 8 7 9 3-1 7-4 7-9V6z"/><path d="m9 12 2 2 4-5"/></svg><span>HERO</span>
       </button>
       <button class="nav-item" type="button" data-tab="shop">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg><span>STORE</span>
@@ -250,184 +321,83 @@ button { touch-action: manipulation; }
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <input type="file" id="import-file" accept="application/json,.json" hidden>
   <script type="module">
-// Pure rules for the phone-friendly, tile-based home simulator.
-const HOME_ITEMS = {
-  bed: { name:'Comfy bed', cost:400, w:2, h:2, kind:'bed', emoji:'🛏️' },
-  sofa: { name:'Soft sofa', cost:500, w:2, h:1, kind:'sofa', emoji:'🛋️' },
-  television: { name:'Television', cost:800, w:2, h:1, kind:'tv', emoji:'📺' },
-  console: { name:'Gaming console', cost:650, w:1, h:1, kind:'console', emoji:'🎮' },
-  dining: { name:'Dining table', cost:350, w:2, h:2, kind:'dining', emoji:'🍽️' },
-  utensils: { name:'Kitchen utensils', cost:100, w:1, h:1, kind:'utensils', emoji:'🍴' },
-  counter: { name:'Kitchen counter', cost:450, w:2, h:1, kind:'counter', emoji:'🍳' },
-  kittybed: { name:'Kitty bed', cost:150, w:1, h:1, kind:'kittybed', emoji:'🐾' },
-  tree: { name:'Garden tree', cost:250, w:1, h:1, kind:'tree', emoji:'🌳' },
-  plant: { name:'Potted plant', cost:120, w:1, h:1, kind:'plant', emoji:'🪴' },
-  bench: { name:'Garden bench', cost:200, w:2, h:1, kind:'bench', emoji:'🌿' },
-  calico: { name:'Calico cat', cost:1500, kind:'pet', emoji:'🐈' },
+// Equipment is cosmetic. Stat advancement comes only from the user's real-world logs.
+const RARITIES = {
+  basic: { name:'Basic', color:'#bdc3cb', glow:'#75818c', order:0 },
+  rare: { name:'Rare', color:'#71d4f0', glow:'#2b89d2', order:1 },
+  epic: { name:'Epic', color:'#cf96fc', glow:'#873bce', order:2 },
+  legendary: { name:'Legendary', color:'#ffd17b', glow:'#ef813b', order:3 },
 };
 
-const HOME_UPGRADES = [
-  { tier:2, name:'Interior makeover', cost:1000, description:'Unlock four floor colorways and fresh wall colors.' },
-  { tier:3, name:'Remodeling permit', cost:5000, description:'Open or close the two interior room partitions.' },
-  { tier:4, name:'Backyard expansion', cost:15000, description:'Grow the property from 12×12 to 16×16 tiles.' },
+const HERO_ITEMS = [
+  {id:'worn-dagger',name:'Worn Dagger',type:'weapon',rarity:'basic',cost:200,shape:'dagger',tone:'#afb7b9',detail:'#8a6a56'},
+  {id:'training-sword',name:'Training Sword',type:'weapon',rarity:'basic',cost:450,shape:'sword',tone:'#bec8ce',detail:'#685a4c'},
+  {id:'tidal-saber',name:'Tidal Saber',type:'weapon',rarity:'rare',cost:1400,shape:'saber',tone:'#64d1f6',detail:'#2b89be'},
+  {id:'storm-lance',name:'Storm Lance',type:'weapon',rarity:'rare',cost:2400,shape:'spear',tone:'#8fddec',detail:'#548fb8'},
+  {id:'astral-greatsword',name:'Astral Greatsword',type:'weapon',rarity:'epic',cost:4900,shape:'greatsword',tone:'#bd9eff',detail:'#8255d1'},
+  {id:'phoenix-staff',name:'Phoenix Staff',type:'weapon',rarity:'epic',cost:6500,shape:'staff',tone:'#ff9b8f',detail:'#e66964'},
+  {id:'starfall-edge',name:'Starfall Edge',type:'weapon',rarity:'legendary',cost:12000,shape:'starblade',tone:'#ffe7a0',detail:'#ea944a'},
+  {id:'celestial-halberd',name:'Celestial Halberd',type:'weapon',rarity:'legendary',cost:18000,shape:'halberd',tone:'#fff0ba',detail:'#f7b54b'},
+
+  {id:'cloth-wraps',name:'Cloth Wraps',type:'armor',rarity:'basic',cost:180,shape:'wraps',tone:'#d4b5a1',detail:'#957f7b'},
+  {id:'leather-vest',name:'Leather Vest',type:'armor',rarity:'basic',cost:400,shape:'leather',tone:'#855e50',detail:'#ca9d78'},
+  {id:'warden-mail',name:'Warden Mail',type:'armor',rarity:'rare',cost:1600,shape:'mail',tone:'#4f91b8',detail:'#a0e1eb'},
+  {id:'nightguard-cloak',name:'Nightguard Cloak',type:'armor',rarity:'rare',cost:2700,shape:'cloak',tone:'#3b6c9a',detail:'#8edff2'},
+  {id:'runic-carapace',name:'Runic Carapace',type:'armor',rarity:'epic',cost:5100,shape:'carapace',tone:'#693e96',detail:'#cf9cf6'},
+  {id:'arcane-mantle',name:'Arcane Mantle',type:'armor',rarity:'epic',cost:7100,shape:'mantle',tone:'#a16fc5',detail:'#e9b1ff'},
+  {id:'solar-aegis',name:'Solar Aegis',type:'armor',rarity:'legendary',cost:14500,shape:'aegis',tone:'#b98139',detail:'#ffe3a0'},
+  {id:'void-regent',name:'Void Regent',type:'armor',rarity:'legendary',cost:21000,shape:'regent',tone:'#303358',detail:'#f2be77'},
+
+  {id:'street-cat',name:'Street Cat',type:'companion',rarity:'basic',cost:500,shape:'cat',tone:'#d0a477',detail:'#f3dcc5'},
+  {id:'sparrow',name:'Sparrow',type:'companion',rarity:'basic',cost:700,shape:'bird',tone:'#ad8b76',detail:'#f2dbb8'},
+  {id:'arctic-fox',name:'Arctic Fox',type:'companion',rarity:'rare',cost:2300,shape:'fox',tone:'#cce8eb',detail:'#7bc5e4'},
+  {id:'ember-lynx',name:'Ember Lynx',type:'companion',rarity:'rare',cost:3400,shape:'lynx',tone:'#d98b58',detail:'#f6c778'},
+  {id:'spirit-wolf',name:'Spirit Wolf',type:'companion',rarity:'epic',cost:7000,shape:'wolf',tone:'#a79adb',detail:'#d2b2ff'},
+  {id:'moon-owl',name:'Moon Owl',type:'companion',rarity:'epic',cost:8800,shape:'owl',tone:'#8e8fd2',detail:'#ece4ff'},
+  {id:'celestial-dragon',name:'Celestial Dragon',type:'companion',rarity:'legendary',cost:18000,shape:'dragon',tone:'#e2b575',detail:'#ffe5b2'},
+  {id:'astral-griffin',name:'Astral Griffin',type:'companion',rarity:'legendary',cost:24000,shape:'griffin',tone:'#e5b36b',detail:'#faf0cf'},
 ];
 
-const starter = [
-  { id:'starter-bed', item:'bed', x:0, y:0, rotation:0 },
-  { id:'starter-sofa', item:'sofa', x:5, y:1, rotation:0 },
-  { id:'starter-counter', item:'counter', x:0, y:5, rotation:0 },
-  { id:'starter-dining', item:'dining', x:9, y:4, rotation:0 },
-  { id:'starter-bench', item:'bench', x:8, y:10, rotation:0 },
-];
+const HERO_INDEX=Object.fromEntries(HERO_ITEMS.map(item=>[item.id,item]));
+const HERO_SLOTS=['weapon','armor','companion'];
 
-function initialHome() {
-  return {
-    tier:1, floor:'rose', walls:'plum', partitions:{ bedroom:true, dining:true },
-    avatar:{ x:5, y:5, facing:'down' },
-    placed:starter.map(item => ({...item})), inventory:[], pets:[],
-    nextId:1,
-  };
+function initialHero() {
+  return {owned:[],equipped:{weapon:null,armor:null,companion:null}};
 }
 
-function homeSize(home) { return home.tier >= 4 ? 16 : 12; }
-function itemSize(placed) {
-  const item = HOME_ITEMS[placed.item];
-  if (!item || item.kind === 'pet') return [0,0];
-  return placed.rotation % 2 ? [item.h,item.w] : [item.w,item.h];
+function hydrateHero(input) {
+  const owned = Array.isArray(input?.owned) ? [...new Set(input.owned.filter(id=>typeof id==='string'&&HERO_INDEX[id]))] : [];
+  const equipped=Object.fromEntries(HERO_SLOTS.map(type=>{
+    const id=input?.equipped?.[type];
+    return [type,owned.includes(id)&&HERO_INDEX[id]?.type===type?id:null];
+  }));
+  return {owned,equipped};
 }
 
-function roomAt(home,x,y) {
-  if (x < 0 || y < 0 || x >= homeSize(home) || y >= homeSize(home)) return null;
-  if (y >= 8) return 'Backyard';
-  if (x < 4) return y < 4 ? 'Bedroom' : 'Kitchen';
-  if (x < 8) return 'Living room';
-  return 'Dining room';
-}
-
-function isWall(home,fromX,fromY,toX,toY) {
-  if (Math.abs(fromX-toX)+Math.abs(fromY-toY)!==1) return true;
-  if (!roomAt(home,toX,toY)) return true;
-  if (fromY===7 && toY===8 || fromY===8 && toY===7) return fromX!==6;
-  if (fromY===3 && toY===4 || fromY===4 && toY===3) return fromX<4 && fromX!==2;
-  if (fromX===3 && toX===4 || fromX===4 && toX===3) return fromY<4 && fromY!==2 && home.partitions.bedroom;
-  if (fromX===7 && toX===8 || fromX===8 && toX===7) return fromY<8 && fromY!==5 && home.partitions.dining;
-  return false;
-}
-
-function objectAt(home,x,y,excludeId=null) {
-  return home.placed.find(p => {
-    if (p.id===excludeId) return false;
-    const [w,h] = itemSize(p);
-    return x>=p.x && x<p.x+w && y>=p.y && y<p.y+h;
-  });
-}
-
-function canStand(home,x,y) {
-  return !!roomAt(home,x,y) && !objectAt(home,x,y);
-}
-
-function movePlayer(home,dx,dy) {
-  if (Math.abs(dx)+Math.abs(dy)!==1) return false;
-  home.avatar.facing = dx>0?'right':dx<0?'left':dy>0?'down':'up';
-  const {x,y} = home.avatar;
-  if (isWall(home,x,y,x+dx,y+dy) || !canStand(home,x+dx,y+dy)) return false;
-  home.avatar.x += dx; home.avatar.y += dy;
+function buyHeroItem(state,id) {
+  const item=HERO_INDEX[id];
+  if(!item||state.hero.owned.includes(id)||state.wallet<item.cost) return false;
+  state.wallet-=item.cost;
+  state.hero.owned.push(id);
+  state.hero.equipped[item.type]=id;
   return true;
 }
 
-function canPlace(home,item,x,y,rotation=0,excludeId=null) {
-  if (!HOME_ITEMS[item] || HOME_ITEMS[item].kind==='pet') return false;
-  const [w,h] = itemSize({item,rotation});
-  if (!Number.isInteger(x) || !Number.isInteger(y)) return false;
-  if (!roomAt(home,x,y) || !roomAt(home,x+w-1,y+h-1)) return false;
-  const room = roomAt(home,x,y);
-  if (room==='Backyard' && !['tree','bench','plant','kittybed'].includes(item)) return false;
-  if (room!=='Backyard' && ['tree','bench'].includes(item)) return false;
-  for (let yy=y;yy<y+h;yy++) for(let xx=x;xx<x+w;xx++) {
-    if (roomAt(home,xx,yy)!==room || objectAt(home,xx,yy,excludeId) || (home.avatar.x===xx && home.avatar.y===yy)) return false;
-    // Reserve the hallways and entrances for movement.
-    if ((xx===2 && yy===3) || (xx===3 && yy===2) || (xx===4 && yy===2) ||
-        (xx===7 && yy===5) || (xx===8 && yy===5) || (xx===6 && (yy===7 || yy===8))) return false;
-  }
+function toggleHeroEquip(hero,id) {
+  const item=HERO_INDEX[id];
+  if(!item||!hero.owned.includes(id)) return false;
+  hero.equipped[item.type] = hero.equipped[item.type]===id ? null : id;
   return true;
 }
 
-function placeInventoryItem(home,item,x,y,rotation=0) {
-  const index=home.inventory.indexOf(item);
-  if (index<0 || !canPlace(home,item,x,y,rotation)) return false;
-  home.inventory.splice(index,1);
-  home.placed.push({id:`owned-${home.nextId++}`,item,x,y,rotation});
+function unequipHeroSlot(hero,slot) {
+  if(!HERO_SLOTS.includes(slot) || !hero.equipped[slot]) return false;
+  hero.equipped[slot]=null;
   return true;
 }
 
-function storePlacedItem(home,id) {
-  const index=home.placed.findIndex(item=>item.id===id);
-  if(index<0) return false;
-  home.inventory.push(home.placed[index].item);
-  home.placed.splice(index,1);
-  return true;
-}
-
-function movePlacedItem(home,id,x,y,rotation) {
-  const item=home.placed.find(p=>p.id===id);
-  if(!item || !canPlace(home,item.item,x,y,rotation,id)) return false;
-  Object.assign(item,{x,y,rotation});
-  return true;
-}
-
-function purchaseHomeItem(state,itemId) {
-  const item=HOME_ITEMS[itemId];
-  if (!item || state.wallet<item.cost) return false;
-  if (item.kind==='pet' && state.home.pets.includes(itemId)) return false;
-  state.wallet -= item.cost;
-  if(item.kind==='pet') state.home.pets.push(itemId);
-  else state.home.inventory.push(itemId);
-  return true;
-}
-
-function purchaseHomeUpgrade(state) {
-  const upgrade=HOME_UPGRADES.find(u=>u.tier===state.home.tier+1);
-  if(!upgrade || state.wallet<upgrade.cost) return false;
-  state.wallet-=upgrade.cost; state.home.tier=upgrade.tier;
-  return true;
-}
-
-function nearbyHomeObject(home) {
-  const {x,y}=home.avatar;
-  if (home.pets.includes('calico') && x>=5 && x<=8 && y>=3 && y<=5) return {name:'Calico cat',kind:'pet'};
-  for(const p of home.placed) {
-    const [w,h]=itemSize(p);
-    const distanceX=Math.max(p.x-x,0,x-(p.x+w-1));
-    const distanceY=Math.max(p.y-y,0,y-(p.y+h-1));
-    if(distanceX+distanceY<=1) return {name:HOME_ITEMS[p.item].name,kind:p.item};
-  }
-  return null;
-}
-
-function hydrateHome(input) {
-  const fresh=initialHome();
-  if (!input || typeof input!=='object') return fresh;
-  const tier=Math.max(1,Math.min(4,Math.floor(Number(input.tier)||1)));
-  const home={...fresh,tier,
-    floor: tier>=2 && ['rose','mint','cream','night'].includes(input.floor) ? input.floor : 'rose',
-    walls: tier>=2 && ['plum','teal','peach','ink'].includes(input.walls) ? input.walls : 'plum',
-    partitions:{bedroom:tier>=3?input.partitions?.bedroom!==false:true,dining:tier>=3?input.partitions?.dining!==false:true},
-    inventory:Array.isArray(input.inventory)?input.inventory.filter(i=>HOME_ITEMS[i]&&HOME_ITEMS[i].kind!=='pet').slice(0,250):[],
-    pets:Array.isArray(input.pets)?['calico'].filter(p=>input.pets.includes(p)):[],
-    nextId:Math.max(1,Math.floor(Number(input.nextId)||1)),
-  };
-  const savedX=Math.floor(Number(input.avatar?.x)),savedY=Math.floor(Number(input.avatar?.y));
-  home.avatar=roomAt(home,savedX,savedY)?{x:savedX,y:savedY,facing:['up','down','left','right'].includes(input.avatar?.facing)?input.avatar.facing:'down'}:{...fresh.avatar};
-  home.placed=[];
-  if(Array.isArray(input.placed)) {
-    for(const p of input.placed.slice(0,250)) {
-      if(!p || !HOME_ITEMS[p.item] || HOME_ITEMS[p.item].kind==='pet') continue;
-      const candidate={id:String(p.id||`restored-${home.nextId++}`).slice(0,90),item:p.item,x:Number(p.x),y:Number(p.y),rotation:Number(p.rotation)===1?1:0};
-      if(canPlace(home,candidate.item,candidate.x,candidate.y,candidate.rotation)) home.placed.push(candidate);
-    }
-  } else home.placed=fresh.placed.map(p=>({...p}));
-  if(!canStand(home,home.avatar.x,home.avatar.y)) home.avatar={x:6,y:6,facing:'down'};
-  return home;
+function visualPower(level) {
+  return Math.min(1,Math.max(0,(Math.max(1,Number(level)||1)-1)/11));
 }
 
 // Lifestyle Tracker's rules live here, independent of its appearance.
@@ -468,7 +438,7 @@ function advanceStat(stat, amount) {
 
 function initialState(today = dateKey()) {
   return {
-    version: 2,
+    version: 3,
     createdAt: today,
     lastSettledDate: shiftDate(today, -1),
     stats: {
@@ -494,8 +464,7 @@ function initialState(today = dateKey()) {
     transactions: [],
     activity: [],
     theme: 'sunset',
-    fuelUntil:{ tea:0, protein:0 },
-    home:initialHome(),
+    hero:initialHero(),
   };
 }
 
@@ -555,11 +524,7 @@ function hydrate(input, today = dateKey()) {
     stat: x.stat, day: validDate(x.day) ? x.day : today, change: Math.max(-1, Math.min(1, Number(x.change) || 0)), reason: safeText(x.reason, 30), level: Math.max(1, Math.floor(Number(x.level) || 1)), quarters: Math.max(0, Math.min(3, Math.floor(Number(x.quarters) || 0))),
   })) : [];
   state.theme = ['acid', 'sunset', 'ice', 'mono'].includes(input.theme) ? input.theme : 'sunset';
-  state.fuelUntil = {
-    tea: Math.max(0,Math.min(4102444800000,Number(input.fuelUntil?.tea)||0)),
-    protein: Math.max(0,Math.min(4102444800000,Number(input.fuelUntil?.protein)||0)),
-  };
-  state.home=hydrateHome(input.home);
+  state.hero=hydrateHero(input.hero);
   return state;
 }
 
@@ -612,551 +577,527 @@ function settleMissedDays(state, today = dateKey()) {
   return missed;
 }
 
-// Canvas-only pixel art: deliberately original sprites, no downloaded game assets.
+// Original human-proportioned pixel art, assembled in layers on a real canvas.
+// Everything is painted using rectangles and angular shapes; no borrowed game sprites.
 
-const T = 32;
-const palette = {
-  rose:{bedroom:['#c9989e','#bd8c94'],living:['#bd899d','#b57c91'],dining:['#d2af9d','#c7a28f'],kitchen:['#b9c3ba','#a6b4b0']},
-  mint:{bedroom:['#9fc0b9','#91aea8'],living:['#a0bcb1','#8dafa5'],dining:['#c7c9a5','#bbbe96'],kitchen:['#9ac3c6','#89b4bd']},
-  cream:{bedroom:['#e1c9aa','#d4bc9f'],living:['#dfc9ac','#d0b895'],dining:['#e3d4b7','#d4c6ab'],kitchen:['#d6dad1','#c8cfc8']},
-  night:{bedroom:['#6c647f','#605975'],living:['#736079','#67546d'],dining:['#8f7880','#826c73'],kitchen:['#686e82','#5d6578']},
-};
-const wallPal={plum:['#3b2e4f','#806184'],teal:['#284e59','#59888a'],peach:['#8d5b5d','#de968a'],ink:['#293345','#596277']};
+const HAIR='#242432', HAIR_LIGHT='#4b4658', SKIN='#b97755', SKIN_LIGHT='#e3ad88', SKIN_SHADOW='#915b48';
 
-function drawHome(canvas,home,chosen=null) {
-  if (!canvas) return;
-  const n=homeSize(home);
-  canvas.width=n*T;canvas.height=n*T;
-  const c=canvas.getContext('2d');
-  if(!c) return;
+function paint(c,x,y,w,h,col) {c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function poly(c,points,col) {
+  c.fillStyle=col;c.beginPath();c.moveTo(points[0][0],points[0][1]);
+  for(let i=1;i<points.length;i++)c.lineTo(points[i][0],points[i][1]);
+  c.closePath();c.fill();
+}
+function roundPixel(c,x,y,r,col) {
+  paint(c,x-r,y-r*.65,r*2,r*1.3,col);
+  paint(c,x-r*.65,y-r,r*1.3,r*2,col);
+}
+function line(c,x,y,w,h,col) {paint(c,x,y,w,h,col);}
+const color=(item)=>item?.tone||'#bcbec8';
+
+function drawHero(canvas,stats,equipment) {
+  if(!canvas)return;
+  canvas.width=240;canvas.height=320;
+  const c=canvas.getContext('2d');if(!c)return;
   c.imageSmoothingEnabled=false;
-  const draw=(x,y,w,h,color)=>{c.fillStyle=color;c.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
-  const sq=(x,y,w,h,color)=>draw(x*T,y*T,w*T,h*T,color);
-  const shade=palette[home.floor]||palette.rose;
-  for(let y=0;y<n;y++) for(let x=0;x<n;x++) {
-    const room=roomAt(home,x,y);
-    if(room==='Backyard') {
-      const a=(x*17+y*31)%6;
-      sq(x,y,1,1,(x+y)%2?'#5b995f':'#6ca666');
-      draw(x*T+4+a,y*T+6,4,3,'#85b270');
-      draw(x*T+17,y*T+21,3,5,'#3e8157');
-    } else {
-      const p=room==='Bedroom'?shade.bedroom:room==='Kitchen'?shade.kitchen:room==='Living room'?shade.living:shade.dining;
-      sq(x,y,1,1,room==='Kitchen'?p[(x+y)%2]:p[y%2]);
-      if(room!=='Kitchen') draw(x*T+2,y*T+T-2,T-4,1,'#ffffff16');
+  const h=visualPower(stats.health.level),s=visualPower(stats.stamina.level),f=visualPower(stats.focus.level);
+  const weapon=HERO_INDEX[equipment.weapon],armor=HERO_INDEX[equipment.armor],pet=HERO_INDEX[equipment.companion];
+  backdrop(c,h,s,f);
+  if(armor && ['cloak','mantle','regent'].includes(armor.shape)) cloak(c,armor,s,h);
+  if(pet) drawPet(c,pet,35,235,1.08);
+  drawCharacter(c,h,s,f,armor,weapon);
+  return canvas;
+}
+
+function backdrop(c,h,s,f) {
+  paint(c,0,0,240,320,'#171120');
+  for(let i=0;i<20;i++)paint(c,0,i*16,240,1,i%2?'#2c1d36':'#24172c');
+  for(let i=0;i<14;i++){
+    const x=(i*71+23)%228,y=(i*47+21)%234;
+    paint(c,x,y,2,2,i%3?'#46304d':'#8a5c78');
+  }
+  paint(c,20,267,200,3,'#7c5264');
+  paint(c,33,270,176,3,'#49354b');
+  for(let i=0;i<10;i++)paint(c,60+i*12,274+Math.abs(i-5),14,2,'#362339');
+  if(s>0.02){
+    for(let i=0;i<Math.ceil(3+s*12);i++){
+      const x=(i*43+24)%194+20,y=(i*63+17)%226+15,size=2+Math.round(s*3);
+      paint(c,x,y,size,size,i%2?'#e69aae':'#75d8cf');
+    }
+    if(s>.36){
+      const a='#64d4ce';
+      poly(c,[[60,160],[70,133],[68,155],[78,145],[67,180],[71,158]],a);
+      if(s>.7)poly(c,[[171,98],[181,73],[177,97],[191,84],[172,127],[177,103]],'#f3b4b5');
     }
   }
-  const wall=wallPal[home.walls]||wallPal.plum;
-  const line=(x,y,w,h)=>{draw(x,y,w,h,wall[0]);draw(x,y,w,3,wall[1]);};
-  line(0,0,n*T,7);line(0,0,7,n*T);line(n*T-7,0,7,n*T);line(0,n*T-7,n*T,7);
-  for(let x=0;x<12;x++) if(x!==6) line(x*T,8*T-4,T,7);
-  for(let x=0;x<4;x++) if(x!==2) line(x*T,4*T-4,T,7);
-  if(home.partitions.bedroom) for(let y=0;y<4;y++) if(y!==2) line(4*T-4,y*T,7,T);
-  if(home.partitions.dining) for(let y=0;y<8;y++) if(y!==5) line(8*T-4,y*T,7,T);
-  // A bright pixel-frame doorway makes the route between rooms easy to spot.
-  for(const [x,y,wide] of [[2,4,true],[6,8,true],[4,2,false],[8,5,false]]) {
-    if(!wide && ((x===4&&!home.partitions.bedroom)||(x===8&&!home.partitions.dining))) continue;
-    if(wide) {draw(x*T,y*T-5,T,3,'#eac8ac');draw(x*T+3,y*T-2,4,4,'#f7dfb4');}
-    else {draw(x*T-5,y*T,3,T,'#eac8ac');draw(x*T-2,y*T+4,4,5,'#f7dfb4');}
+  if(f>.06){
+    const a=f>.68?'#be9efc':'#7967ae';
+    const r=23+f*13;
+    for(let i=0;i<8;i++){
+      const theta=i*Math.PI/4;
+      paint(c,119+Math.cos(theta)*r,61+Math.sin(theta)*r,3,3,a);
+    }
+    if(f>.4){
+      paint(c,118,12,4,14,a);paint(c,112,18,16,3,a);
+      paint(c,109,24,4,4,a);paint(c,127,24,4,4,a);
+    }
   }
-  for(const object of home.placed) sprite(c,object,draw);
-  if(home.pets.includes('calico')) catSprite(draw,7*T+5,4*T+5);
-  avatarSprite(draw,home.avatar.x*T+6,home.avatar.y*T+3,home.avatar.facing);
-  if(chosen) {
-    c.strokeStyle='#fbf2a6';c.lineWidth=3;c.setLineDash([5,3]);
-    c.strokeRect(chosen.x*T+1,chosen.y*T+1,T-2,T-2);c.setLineDash([]);
+  paint(c,13,12,42,2,'#e18fac');paint(c,13,16,24,2,'#926080');
+  paint(c,188,12,40,2,'#85d7d3');paint(c,204,16,24,2,'#547d88');
+  // A clean base-platform shadow grounds the feet without making the hero a toy.
+  poly(c,[[65,269],[172,269],[193,278],[49,278]],'#0e0b17');
+}
+
+function drawCharacter(c,h,s,f,armor,weapon) {
+  const shoulder=17+Math.round(h*13),waist=15+Math.round(h*3),arm=6+Math.round(h*5);
+  const slouch=Math.round((1-s)*7),cx=120,top=98+slouch;
+  const left=cx-shoulder,right=cx+shoulder;
+  const handX=right+arm+7;
+  // Pants are always part of the original, equip-free character.
+  poly(c,[[cx-waist-4,174],[cx+waist+4,174],[cx+waist+6,194],[cx+18,244],[cx+4,246],[cx-1,198],[cx-6,247],[cx-20,245],[cx-waist-6,195]],'#343645');
+  poly(c,[[cx-waist-3,180],[cx+waist+3,180],[cx+waist+2,189],[cx-waist-3,189]],'#515265');
+  line(c,cx-2,193,4,45,'#232938');
+  line(c,cx-waist+1,189,3,41,'#6e6870');
+  line(c,cx+waist-3,192,3,37,'#51586d');
+  poly(c,[[cx-23,239],[cx-7,239],[cx-6,259],[cx-25,261],[cx-31,257]],'#292c39');
+  poly(c,[[cx+7,240],[cx+25,238],[cx+30,257],[cx+24,261],[cx+5,259]],'#292c39');
+  line(c,cx-29,256,24,5,'#151824');line(c,cx+6,257,25,5,'#151824');
+  // Neck and shoulders form a tapered anatomical silhouette, not a brick figure.
+  poly(c,[[cx-9,90+slouch],[cx+9,90+slouch],[cx+10,105+slouch],[cx-10,105+slouch]],SKIN_SHADOW);
+  poly(c,[[cx-7,90+slouch],[cx+7,90+slouch],[cx+5,105+slouch],[cx-5,105+slouch]],SKIN_LIGHT);
+  poly(c,[[left+3,top+6],[left+8,top],[cx-10,top-2],[cx+10,top-2],[right-8,top],[right+2,top+7],[cx+waist,172],[cx-waist,172]],SKIN_SHADOW);
+  poly(c,[[left+6,top+7],[left+12,top+2],[cx,top+8],[right-12,top+2],[right-5,top+8],[cx+waist-3,170],[cx-waist+3,170]],SKIN);
+  poly(c,[[cx-11,top+8],[cx+8,top+8],[cx+waist-7,top+22],[cx-waist+7,top+22]],SKIN_LIGHT);
+  // Chest and waist anatomy is revealed gradually with HEALTH.
+  if(h<.18) {
+    line(c,cx-10,top+24,6,2,'#a56a54');line(c,cx+5,top+30,5,2,'#a56a54');
+    line(c,cx-7,top+42,3,2,'#9a624f');line(c,cx+6,top+45,3,2,'#9a624f');
+  } else {
+    poly(c,[[cx-shoulder+10,top+15],[cx-4,top+18],[cx-3,top+33],[cx-shoulder+12,top+34]],'#d29873');
+    poly(c,[[cx+4,top+18],[cx+shoulder-9,top+15],[cx+shoulder-12,top+34],[cx+3,top+33]],'#d29873');
+    line(c,cx-2,top+20,3,18,SKIN_SHADOW);
+    for(let i=0;i<Math.floor(1+h*3);i++){
+      line(c,cx-10,top+40+i*9,8,2,'#a46a51');line(c,cx+3,top+40+i*9,8,2,'#a46a51');
+    }
+  }
+  line(c,cx-5,top+65,10,3,'#ad7258');
+  if(h>.5){
+    line(c,cx-shoulder+3,top+13,7,5,'#e0ad88');line(c,cx+shoulder-10,top+13,7,5,'#e0ad88');
+    line(c,cx-14,top+44,4,15,'#c98e6d');line(c,cx+11,top+44,4,15,'#c98e6d');
+  }
+  // Left arm, with natural elbow and wrist taper.
+  poly(c,[[left+6,top+6],[left-3,top+11],[left-8,top+34],[left-5,top+57],[left-2,top+61],[left+5,top+56],[left+6,top+38],[left+arm,top+12]],SKIN_SHADOW);
+  poly(c,[[left+4,top+9],[left,top+12],[left-5,top+36],[left-2,top+54],[left+3,top+54],[left+4,top+35]],SKIN_LIGHT);
+  // Weapon is held between the front hand and forearm, never floating at the side.
+  if(weapon) drawWeapon(c,weapon,handX,top+65);
+  poly(c,[[right-7,top+6],[right+4,top+10],[right+arm+4,top+30],[right+arm+6,top+53],[right+arm+2,top+67],[right+arm-6,top+67],[right+arm-6,top+48],[right+2,top+27]],SKIN_SHADOW);
+  poly(c,[[right-3,top+9],[right+5,top+13],[right+arm,top+34],[right+arm+2,top+53],[right+arm-3,top+56],[right+arm-7,top+36]],SKIN_LIGHT);
+  if(h>.45){
+    line(c,left-5,top+33,4,14,'#b47b5c');line(c,right+arm,top+32,5,13,'#b47b5c');
+  }
+  if(armor) drawArmor(c,armor,cx,top,shoulder,waist);
+  // Fingers wrap around the grip after the weapon is painted.
+  poly(c,[[handX-7,top+59],[handX+3,top+59],[handX+7,top+65],[handX+3,top+75],[handX-4,top+76],[handX-8,top+70]],SKIN_SHADOW);
+  line(c,handX-3,top+63,10,6,SKIN_LIGHT);
+  line(c,handX+1,top+66,5,3,'#ca9175');
+  drawHead(c,cx,51+slouch,f);
+}
+
+function drawHead(c,cx,y,f) {
+  // Pointed jaw, cheekbones, nose bridge, distinct middle-part hair, round glasses.
+  poly(c,[[cx-19,y+7],[cx-13,y-1],[cx+14,y-1],[cx+19,y+8],[cx+16,y+29],[cx+7,y+38],[cx-7,y+38],[cx-16,y+29]],SKIN_SHADOW);
+  poly(c,[[cx-15,y+7],[cx-9,y+1],[cx+11,y+1],[cx+15,y+8],[cx+13,y+26],[cx+6,y+34],[cx-6,y+34],[cx-13,y+26]],SKIN_LIGHT);
+  line(c,cx-15,y+20,3,9,'#cf916d');line(c,cx+13,y+21,3,7,'#ca896b');
+  line(c,cx-5,y+20,2,2,'#34303e');line(c,cx+6,y+20,2,2,'#34303e');
+  // Round, metal-frame glasses inspired by the reference, sized to a human face.
+  c.strokeStyle=f>.58?'#b7a7ff':'#35323d';c.lineWidth=2;
+  c.strokeRect(cx-13,y+14,11,10);c.strokeRect(cx+3,y+14,11,10);
+  line(c,cx-2,y+17,5,2,'#3d3748');line(c,cx-17,y+16,5,2,'#35323d');line(c,cx+14,y+16,4,2,'#35323d');
+  line(c,cx,y+24,2,5,'#b97a5e');line(c,cx-3,y+30,8,2,'#945b50');
+  // Dark, soft center-parted hair and long curtain strands.
+  poly(c,[[cx-20,y+12],[cx-21,y-2],[cx-14,y-13],[cx-2,y-17],[cx+13,y-14],[cx+21,y-5],[cx+22,y+11],[cx+15,y+11],[cx+10,y-3],[cx+2,y-10],[cx-2,y-7],[cx-11,y-1],[cx-14,y+12]],HAIR);
+  poly(c,[[cx-18,y+7],[cx-19,y-3],[cx-12,y-12],[cx-3,y-13],[cx-5,y-5],[cx-14,y+2]],HAIR_LIGHT);
+  poly(c,[[cx+1,y-13],[cx+14,y-11],[cx+18,y-2],[cx+18,y+10],[cx+13,y+6],[cx+11,y-3]],'#343241');
+  line(c,cx-1,y-13,3,13,'#766a6a');
+  line(c,cx-18,y+9,5,11,HAIR);line(c,cx+14,y+8,6,12,HAIR);
+  line(c,cx-14,y-12,8,2,'#696071');line(c,cx+7,y-12,7,2,'#6f6372');
+  if(f>.35){
+    line(c,cx-12,y+15,8,2,'#7fe9e4');line(c,cx+4,y+15,8,2,'#bdabff');
+    if(f>.75){line(c,cx+24,y+8,3,10,'#cfb9ff');line(c,cx+21,y+12,9,3,'#cfb9ff');}
   }
 }
 
-function sprite(c,obj,p) {
-  const {x,y,rotation,item}=obj;
-  const [w,h]=itemSize(obj);
-  const X=x*T,Y=y*T,W=w*T,H=h*T;
-  const frame=(inner,top,edge='#4b344c')=>{p(X+2,Y+5,W-4,H-7,edge);p(X+5,Y+2,W-10,H-9,inner);p(X+5,Y+2,W-10,5,top);};
-  if(item==='bed') {
-    frame('#f3c3d4','#f3e7db');p(X+7,Y+10,W-14,12,'#f5e9dc');p(X+7,Y+27,W-14,H-34,'#df7f9e');
-    p(X+9,Y+29,10,5,'#f5a7bc');p(X+W-19,Y+29,10,5,'#f5a7bc');
-  } else if(item==='sofa'||item==='bench') {
-    frame(item==='sofa'?'#8660a0':'#bd8665',item==='sofa'?'#b184bc':'#e5b47d');
-    p(X+8,Y+11,W-16,H-17,item==='sofa'?'#c6a2cc':'#cb955e');
-    p(X+W/2-2,Y+11,4,H-18,'#7d568b');
-  } else if(item==='television') {
-    frame('#293047','#4e536c');p(X+8,Y+8,W-16,H-15,'#4b919c');p(X+13,Y+12,W-28,3,'#8ee5d4');
-  } else if(item==='dining') {
-    frame('#d5a27b','#f5d2a1');p(X+9,Y+10,W-18,H-20,'#e9b886');p(X+17,Y+17,10,10,'#f9eee0');p(X+W-27,Y+H-27,10,10,'#f9eee0');
-  } else if(item==='counter') {
-    frame('#b8a4a0','#e5d6c6');p(X+11,Y+12,19,14,'#657c85');p(X+W-25,Y+12,11,4,'#ece6d8');
-  } else if(item==='tree') {
-    p(X+13,Y+18,7,12,'#78573d');p(X+6,Y+7,20,18,'#2e7d55');p(X+10,Y+2,13,18,'#42975f');p(X+12,Y+6,6,5,'#83b76b');
-  } else if(item==='plant') {
-    p(X+8,Y+21,16,8,'#bd7777');p(X+10,Y+8,12,17,'#287962');p(X+6,Y+11,20,7,'#4ba879');
-  } else if(item==='kittybed') {
-    p(X+2,Y+8,28,20,'#8d678c');p(X+6,Y+12,20,13,'#d7b3bc');p(X+10,Y+15,12,7,'#f7dbe2');
-  } else if(item==='console') {
-    p(X+6,Y+8,20,20,'#2f3650');p(X+10,Y+11,12,12,'#515d77');p(X+14,Y+13,5,3,'#75cabc');
-  } else if(item==='utensils') {
-    p(X+5,Y+8,22,20,'#d6c0aa');p(X+10,Y+11,2,13,'#565a63');p(X+15,Y+11,2,13,'#565a63');p(X+20,Y+11,3,13,'#aebdc0');
+function cloak(c,item,s,h) {
+  const t=item.tone;
+  poly(c,[[100,103],[140,103],[165,145],[175,241],[144,230],[119,240],[95,231],[73,242],[85,143]],'#201b33');
+  poly(c,[[99,105],[139,105],[159,143],[165,224],[138,215],[119,222],[94,218],[80,228],[88,139]],t);
+  line(c,88,150,7,72,item.detail);line(c,147,150,8,73,item.detail);
+}
+
+function drawArmor(c,item,cx,top,shoulder,waist) {
+  const shape=item.shape,t=item.tone,d=item.detail,l=cx-shoulder,r=cx+shoulder;
+  if(shape==='wraps'){
+    poly(c,[[l+10,top+4],[cx+10,top+10],[cx+9,top+21],[l+6,top+13]],t);
+    poly(c,[[r-11,top+8],[cx-7,top+27],[cx-6,top+36],[r-5,top+19]],t);
+    line(c,cx-waist,top+56,waist*2,7,d);
+  } else if(shape==='leather') {
+    poly(c,[[l+7,top+4],[cx-5,top+11],[cx+6,top+11],[r-6,top+4],[cx+waist,top+57],[cx-waist,top+57]],t);
+    poly(c,[[cx-2,top+9],[cx+7,top+9],[cx+5,top+57],[cx-2,top+57]],d);
+    line(c,cx-waist,top+45,waist*2,6,'#473c45');line(c,cx+waist-8,top+44,6,8,'#d9b98c');
+  } else {
+    poly(c,[[l+2,top+5],[cx-8,top+5],[cx,top+13],[cx+8,top+5],[r-2,top+5],[cx+waist+1,top+58],[cx-waist-1,top+58]],'#25293d');
+    poly(c,[[l+5,top+9],[cx-6,top+11],[cx,top+17],[cx+7,top+11],[r-5,top+9],[cx+waist-3,top+50],[cx-waist+3,top+50]],t);
+    poly(c,[[cx-shoulder+8,top+10],[cx-6,top+18],[cx-6,top+33],[cx-shoulder+14,top+29]],d);
+    poly(c,[[cx+5,top+18],[cx+shoulder-8,top+10],[cx+shoulder-13,top+29],[cx+5,top+33]],d);
+    line(c,cx-2,top+18,4,32,'#303249');
+    line(c,cx-waist+4,top+48,waist*2-8,7,d);
+    if(['mail','carapace','aegis','regent'].includes(shape)) {
+      poly(c,[[l-6,top+3],[l+10,top],[l+16,top+13],[l-9,top+19]],t);
+      poly(c,[[r-10,top],[r+7,top+3],[r+10,top+19],[r-15,top+13]],t);
+      line(c,l-5,top+8,14,3,d);line(c,r-9,top+8,14,3,d);
+    }
+    if(['carapace','mantle','aegis','regent'].includes(shape)){
+      for(let i=0;i<3;i++)line(c,cx-12,top+35+i*6,24,2,d);
+      line(c,cx-3,top+22,6,11,'#f6d9c4');
+    }
+    if(['aegis','regent'].includes(shape)){
+      poly(c,[[cx-9,top+15],[cx,top+24],[cx+9,top+15],[cx,top+9]],d);
+      line(c,cx-3,top+15,6,5,'#fff8d8');
+      line(c,cx-waist-3,top+58,9,15,t);line(c,cx+waist-5,top+58,9,15,t);
+    }
   }
-  if(rotation%2 && w!==h) { /* dimensions rotate; art fills its rotated footprint. */ }
 }
 
-function avatarSprite(p,x,y,facing) {
-  p(x+4,y+24,7,5,'#282f4d');p(x+13,y+24,7,5,'#282f4d');
-  p(x+1,y+14,22,12,'#6b59b1');p(x+6,y+14,12,9,'#9078c5');
-  p(x+5,y+3,16,15,'#483146');p(x+7,y+7,12,10,'#dca98d');
-  p(x+4,y+2,16,6,'#352c44');p(x+1,y+3,10,5,'#352c44');
-  if(facing==='down') {p(x+9,y+12,2,2,'#303040');p(x+16,y+12,2,2,'#303040');}
-  if(facing==='left') p(x+7,y+12,3,2,'#303040');
-  if(facing==='right') p(x+16,y+12,3,2,'#303040');
-  p(x+2,y+18,3,8,'#dca98d');p(x+21,y+18,3,8,'#dca98d');
+function drawWeapon(c,item,x,gripY) {
+  const t=item.tone,d=item.detail,shape=item.shape;
+  // Handle at the character's actual right hand, not offset as an icon.
+  line(c,x-2,gripY-28,5,43,'#302d3b');line(c,x-1,gripY-25,3,33,'#9c7056');
+  if(shape==='staff'){
+    line(c,x-3,gripY-113,7,91,'#6f4257');line(c,x-1,gripY-105,3,75,'#d4a16d');
+    poly(c,[[x,gripY-134],[x+11,gripY-119],[x+4,gripY-109],[x-6,gripY-116]],t);
+    line(c,x-2,gripY-123,5,9,'#ffefaa');
+  }else if(shape==='spear'||shape==='halberd'){
+    line(c,x-2,gripY-128,4,106,'#9d7080');
+    poly(c,[[x,gripY-153],[x+9,gripY-133],[x+4,gripY-122],[x-4,gripY-122],[x-9,gripY-133]],t);
+    if(shape==='halberd'){
+      poly(c,[[x+3,gripY-130],[x+23,gripY-145],[x+20,gripY-119],[x+5,gripY-117]],d);
+      line(c,x+17,gripY-132,4,11,'#fff1b8');
+    }
+  }else{
+    const len=shape==='dagger'?30:shape==='greatsword'||shape==='starblade'?100:76;
+    const width=shape==='dagger'?6:shape==='greatsword'||shape==='starblade'?13:8;
+    const bladeY=gripY-30;
+    poly(c,[[x-width,bladeY],[x+width,bladeY],[x+width-2,bladeY-len+18],[x,bladeY-len],[x-width+2,bladeY-len+18]],d);
+    poly(c,[[x-3,bladeY],[x+2,bladeY],[x+2,bladeY-len+15],[x,bladeY-len+4]],t);
+    line(c,x-width-7,bladeY,2*width+14,5,'#484353');
+    line(c,x-width-4,bladeY+1,2*width+8,2,t);
+    if(shape==='saber')poly(c,[[x+width,bladeY-15],[x+width+8,bladeY-44],[x+width+5,bladeY-61],[x+width-2,bladeY-21]],'#82ecfb');
+    if(shape==='starblade'){
+      poly(c,[[x,bladeY-len+9],[x+12,bladeY-len+23],[x+6,bladeY-len+6],[x,bladeY-len-10],[x-6,bladeY-len+6]],'#ffe59a');
+      line(c,x-2,bladeY-len+19,4,15,'#fff8df');
+    }
+  }
+  line(c,x-4,gripY+6,9,6,d);
 }
 
-function catSprite(p,x,y) {
-  p(x+3,y+9,19,16,'#f4d2b3');p(x+2,y+4,8,11,'#f4d2b3');p(x+15,y+4,8,11,'#f4d2b3');
-  p(x+6,y+4,5,7,'#d87e56');p(x+13,y+11,10,11,'#3f414f');
-  p(x+7,y+15,3,3,'#313a4d');p(x+17,y+15,3,3,'#313a4d');p(x+12,y+19,3,2,'#c86e78');
-  p(x+22,y+18,4,4,'#f4d2b3');p(x+24,y+12,3,8,'#d87e56');
+function drawPet(c,item,x,y,size=1){
+  if(!item)return;
+  c.save();c.translate(x,y);c.scale(size,size);
+  const t=item.tone,d=item.detail,shape=item.shape;
+  const p=(a,b,w,h,col)=>paint(c,a,b,w,h,col);
+  // Shared feet and living posture; silhouettes deliberately vary by species.
+  if(['bird','owl'].includes(shape)){
+    poly(c,[[6,20],[-9,9],[-7,28],[7,34],[26,28],[33,11],[17,20]],t);
+    poly(c,[[7,5],[25,5],[30,23],[23,34],[9,33],[3,23]],t);
+    if(shape==='owl'){p(6,1,7,7,t);p(23,1,7,7,t);p(10,14,6,7,'#fff5d2');p(21,14,6,7,'#fff5d2');p(12,16,2,3,'#25283d');p(23,16,2,3,'#25283d');}
+    else {p(13,12,3,3,'#272a3c');poly(c,[[27,19],[37,23],[27,25]],'#e9ba77');p(14,23,9,8,d);}
+    p(13,32,3,7,'#a77b52');p(23,32,3,7,'#a77b52');
+  } else if(shape==='dragon'||shape==='griffin'){
+    poly(c,[[-8,12],[-20,-8],[4,2],[12,-8],[19,18]],d);
+    poly(c,[[22,9],[48,-13],[42,20],[31,30]],t);
+    poly(c,[[4,22],[14,8],[32,11],[40,31],[25,38],[7,36]],t);
+    poly(c,[[4,10],[8,-5],[20,-12],[30,-3],[28,14],[17,19]],d);
+    if(shape==='dragon'){
+      poly(c,[[16,-5],[20,-22],[26,-7]],t);p(17,5,4,4,'#3b344d');
+      poly(c,[[40,30],[57,35],[59,24],[65,43],[47,40]],d);
+    }else{
+      poly(c,[[1,7],[-9,16],[11,18]],'#f3e9cb');p(15,3,4,4,'#3b344d');
+      p(13,34,6,10,'#e2b37d');p(31,34,7,10,'#e2b37d');
+    }
+  } else {
+    poly(c,[[5,31],[-9,21],[-15,7],[-11,5],[2,15],[11,27]],d);
+    poly(c,[[3,18],[9,7],[26,7],[36,22],[32,35],[4,36]],t);
+    poly(c,[[9,12],[6,-4],[17,4],[24,-1],[32,13],[28,24],[13,24]],t);
+    if(shape==='fox'||shape==='lynx'||shape==='wolf'){
+      poly(c,[[6,3],[5,-10],[17,0]],d);poly(c,[[22,1],[28,-12],[32,8]],d);
+      poly(c,[[25,16],[38,17],[29,22]],d);
+    }else {poly(c,[[7,5],[6,-5],[16,3]],t);poly(c,[[22,3],[30,-5],[31,12]],t);}
+    p(13,13,3,3,'#292b3a');p(24,13,3,3,'#292b3a');
+    p(19,20,4,3,'#e2b5a3');
+    p(6,32,7,9,t);p(27,32,7,9,t);p(9,37,5,3,d);p(29,37,5,3,d);
+    if(shape==='wolf'||shape==='fox')p(28,25,9,5,d);
+  }
+  // Aura is part of the rarity identity, not a stat bonus.
+  if(['epic','legendary'].includes(item.rarity)){
+    p(-12,2,3,3,d);p(40,0,4,4,d);p(47,34,3,3,d);
+  }
+  if(item.rarity==='legendary'){p(-17,16,3,10,'#ffdc8e');p(-20,20,9,3,'#ffdc8e');}
+  c.restore();
+}
+
+function drawItemIcon(canvas,item){
+  if(!canvas||!item)return;
+  canvas.width=88;canvas.height=88;
+  const c=canvas.getContext('2d');if(!c)return;
+  c.imageSmoothingEnabled=false;
+  paint(c,0,0,88,88,'#1b1425');
+  paint(c,4,4,80,80,'#282032');
+  const r=RARITIES[item.rarity];
+  paint(c,4,4,80,3,r.glow);paint(c,4,81,80,3,r.glow);
+  if(item.type==='weapon'){
+    c.save();c.translate(-8,0);c.scale(.43,.43);
+    drawWeapon(c,item,120,185);c.restore();
+  }else if(item.type==='armor'){
+    const w=44,mid=44;
+    poly(c,[[mid-w/2,16],[mid-10,18],[mid,26],[mid+10,18],[mid+w/2,16],[mid+15,70],[mid-15,70]],item.tone);
+    poly(c,[[23,19],[36,28],[36,55],[29,57]],item.detail);
+    poly(c,[[52,28],[66,19],[59,57],[52,55]],item.detail);
+    paint(c,42,28,4,36,'#24283a');paint(c,31,58,26,4,item.detail);
+    if(['aegis','regent','carapace'].includes(item.shape)){
+      poly(c,[[17,17],[33,14],[36,28],[13,35]],item.tone);
+      poly(c,[[55,14],[70,17],[76,35],[52,28]],item.tone);
+      paint(c,39,35,10,10,'#fce7bb');
+    }
+    if(item.shape==='wraps'){paint(c,27,21,34,8,'#d9b3a1');paint(c,37,40,20,8,'#efcfb7');}
+  }else{
+    const winged=['dragon','griffin'].includes(item.shape);
+    c.save();c.translate(winged?17:14,winged?12:11);c.scale(winged?1:1.5,winged?1:1.5);
+    drawPet(c,item,winged?5:4,winged?12:8,1);c.restore();
+  }
+  if(item.rarity==='legendary'){
+    paint(c,9,9,5,5,'#ffecae');paint(c,74,71,4,4,'#ffe4ad');
+  }
 }
 
 
-const STORAGE_KEY = 'lifestyle-tracker:v1';
-const screen = document.getElementById('screen');
-const walletTop = document.getElementById('wallet-top');
-const dialog = document.getElementById('editor-dialog');
-const toastElement = document.getElementById('toast');
-const importFile = document.getElementById('import-file');
-const tabs = ['status', 'missions', 'home', 'shop', 'settings'];
-let activeTab = 'status';
-let homeMode = 'walk';
-let homeSelection = null;
-let homeRotation = 0;
-let activeDate = dateKey();
+// Separate storage lets the hero experiment coexist with the original home version.
+const STORAGE_KEY='lifestyle-tracker:hero:v1';
+const LEGACY_KEY='lifestyle-tracker:v1';
+const screen=document.getElementById('screen');
+const walletTop=document.getElementById('wallet-top');
+const dialog=document.getElementById('editor-dialog');
+const toastElement=document.getElementById('toast');
+const importFile=document.getElementById('import-file');
+const tabs=['status','missions','hero','shop','settings'];
+let activeTab='status';
+let storeFilter='weapon';
+let activeDate=dateKey();
 let toastTimer;
-let state = loadState();
+let state=loadState();
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? hydrate(JSON.parse(raw), dateKey()) : initialState(dateKey());
-  } catch (error) {
-    alert('Saved data could not be opened. The tracker has started a new local session. If you have a backup, you can import it in Settings.');
+function loadState(){
+  try{
+    const current=localStorage.getItem(STORAGE_KEY);
+    if(current)return hydrate(JSON.parse(current),dateKey());
+    const earlier=localStorage.getItem(LEGACY_KEY);
+    if(earlier)return hydrate(JSON.parse(earlier),dateKey());
+    return initialState(dateKey());
+  }catch{
+    alert('Could not read saved progress. A new profile was started; you can restore a backup in Settings.');
     return initialState(dateKey());
   }
 }
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{showToast('Could not save. Export a backup.');}}
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);}
+function amount(n){return Math.floor(n).toLocaleString('en-US');}
+function completed(stat){return state.dayLog[activeDate]?.[stat]===true;}
+function formatDate(key){const [y,m,d]=key.split('-').map(Number);return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric'}).format(new Date(y,m-1,d,12));}
+function uniqueId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;}
+function showToast(message){toastElement.textContent=message;toastElement.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastElement.classList.remove('visible'),3000);}
 
-function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-  catch { showToast('Storage unavailable. Export a backup in Settings.'); }
+function syncDay(){
+  const now=dateKey();if(now!==activeDate)activeDate=now;
+  const missed=settleMissedDays(state,now);
+  if(missed){save();showToast('Daily stat update applied');}
 }
 
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
-}
-
-function amount(value) { return Math.floor(value).toLocaleString('en-US'); }
-function completed(statKey) { return state.dayLog[activeDate]?.[statKey] === true; }
-function formatDate(key, options = { month:'short', day:'numeric' }) {
-  const [y,m,d] = key.split('-').map(Number);
-  return new Intl.DateTimeFormat('en-US', options).format(new Date(y,m-1,d,12));
-}
-
-function showToast(message) {
-  toastElement.textContent = message;
-  toastElement.classList.add('visible');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastElement.classList.remove('visible'), 3500);
-}
-
-function syncDay() {
-  const now = dateKey();
-  if (now !== activeDate) activeDate = now;
-  const missed = settleMissedDays(state, now);
-  if (missed) { save(); showToast(`New day: ${missed} missed stat check${missed === 1 ? '' : 's'} applied`); }
-}
-
-function render() {
-  document.body.dataset.theme = state.theme;
-  walletTop.textContent = amount(state.wallet);
-  const pages = { status: renderStatus, missions: renderMissions, home: renderHome, shop: renderShop, settings: renderSettings };
-  screen.innerHTML = pages[activeTab]();
-  if (activeTab==='home') updateHomeCanvas();
-  document.querySelectorAll('[data-tab]').forEach(button => {
-    const isActive = button.dataset.tab === activeTab;
-    button.classList.toggle('active', isActive);
-    if (isActive) button.setAttribute('aria-current', 'page');
-    else button.removeAttribute('aria-current');
+function render(){
+  document.body.dataset.theme=state.theme;
+  walletTop.textContent=amount(state.wallet);
+  const views={status:renderStatus,missions:renderMissions,hero:renderHero,shop:renderShop,settings:renderSettings};
+  screen.innerHTML=views[activeTab]();
+  if(activeTab==='hero'||activeTab==='status')drawHero(document.getElementById('hero-canvas'),state.stats,state.hero.equipped);
+  if(activeTab==='shop'||activeTab==='hero'){
+    document.querySelectorAll('canvas[data-item]').forEach(canvas=>drawItemIcon(canvas,HERO_INDEX[canvas.dataset.item]));
+  }
+  document.querySelectorAll('[data-tab]').forEach(button=>{
+    const active=button.dataset.tab===activeTab;
+    button.classList.toggle('active',active);
+    if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
   });
 }
 
-function updateHomeCanvas() {
-  const canvas=document.getElementById('home-canvas');
-  let chosen=null;
-  if (homeSelection?.type==='placed') {
-    const p=state.home.placed.find(obj=>obj.id===homeSelection.id);
-    if(p) chosen={x:p.x,y:p.y};
-  }
-  drawHome(canvas,state.home,chosen);
+function statGlyph(key){
+  const shape={
+    health:'<path d="M50 78 20 48C6 34 13 14 31 14c9 0 15 5 19 11 4-6 10-11 19-11 18 0 25 20 11 34L50 78Z"/>',
+    stamina:'<path d="M55 12 23 54h26l-5 34 34-46H53l2-30Z"/>',
+    focus:'<path d="M7 50C20 32 35 24 50 24s30 8 43 26C80 68 65 76 50 76S20 68 7 50Zm43-17a17 17 0 1 0 0 34 17 17 0 0 0 0-34Z" fill-rule="evenodd"/>',
+  }[key];
+  return `<svg class="stat-glyph" viewBox="0 0 100 100" aria-hidden="true">${shape}</svg>`;
 }
-
-function statGlyph(key) {
-  // Original vector versions of the reference's heart, bolt, and eye symbols.
-  const shapes = {
-    health: '<path d="M50 78 20 48C6 34 13 14 31 14c9 0 15 5 19 11 4-6 10-11 19-11 18 0 25 20 11 34L50 78Z"/>',
-    stamina: '<path d="M55 12 23 54h26l-5 34 34-46H53l2-30Z"/>',
-    focus: '<path d="M7 50C20 32 35 24 50 24s30 8 43 26C80 68 65 76 50 76S20 68 7 50Zm43-17a17 17 0 1 0 0 34 17 17 0 0 0 0-34Z" fill-rule="evenodd"/>',
-  };
-  return `<svg class="stat-glyph" viewBox="0 0 100 100" aria-hidden="true">${shapes[key]}</svg>`;
-}
-
-function ringMarkup(stat, label, key) {
-  const paths = Array.from({ length:4 }, (_, index) => {
-    const rotate = -90 + index * 90;
-    return `<circle class="track" cx="50" cy="50" r="42" stroke-dasharray="56 264" transform="rotate(${rotate} 50 50)" />${index < stat.quarters ? `<circle class="segment" cx="50" cy="50" r="42" stroke-dasharray="56 264" transform="rotate(${rotate} 50 50)" />` : ''}`;
+function ringMarkup(stat,key){
+  const path=Array.from({length:4},(_,i)=>{
+    const transform=`rotate(${-90+i*90} 50 50)`;
+    return `<circle class="track" cx="50" cy="50" r="42" stroke-dasharray="56 264" transform="${transform}"/>${i<stat.quarters?`<circle class="segment" cx="50" cy="50" r="42" stroke-dasharray="56 264" transform="${transform}"/>`:''}`;
   }).join('');
-  return `<div class="ring-wrap" role="img" aria-label="${label}: level ${stat.level}, ${stat.quarters} out of 4 quarters complete">
-    <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">${paths}</svg>
-    <div class="ring-center" aria-hidden="true"><span class="glyph-disc">${statGlyph(key)}</span></div>
-  </div>`;
+  return `<div class="ring-wrap" role="img" aria-label="${key} level ${stat.level}, ${stat.quarters} out of 4"><svg class="ring" viewBox="0 0 100 100" aria-hidden="true">${path}</svg><div class="ring-center"><span class="glyph-disc">${statGlyph(key)}</span></div></div>`;
+}
+function statusCard(key){
+  const stat=state.stats[key],done=completed(key),def=STATS[key];
+  return `<article class="stat-card" data-stat="${key}">${ringMarkup(stat,key)}<div class="stat-meta"><div class="stat-label">${def.name}</div><div class="stat-level">LEVEL <strong>${stat.level}</strong></div><div class="quarter-count">${stat.quarters} / 4</div><div class="stat-actions">${done?`<span class="stat-completed">✓ DONE</span><button class="undo-link" data-action="undo-stat" data-id="${key}">UNDO</button>`:`<button class="action-btn" data-action="log-stat" data-id="${key}">+ ${def.action.toUpperCase()}</button>`}</div></div></article>`;
+}
+function heroStage(compact=false){
+  const eq=state.hero.equipped;
+  const pet=HERO_INDEX[eq.companion];
+  return `<section class="hero-stage ${compact?'compact':''}"><div class="hero-canvas-frame"><div class="stage-upper"><span>CHARACTER // 001</span><span class="stage-live">● ACTIVE</span></div><canvas id="hero-canvas" width="240" height="320" aria-label="Human-proportioned pixel art hero with dark center-parted hair and glasses. Health affects muscle definition, Stamina affects energy, and Focus affects magical effects. Equipment appears on his body."></canvas><div class="stage-bottom"><span>${eq.weapon?escapeHtml(HERO_INDEX[eq.weapon].name):'UNARMED'}</span><span>${pet?escapeHtml(pet.name):'SOLO'}</span></div></div>
+  <div class="stage-attributes"><span>♥ ${state.stats.health.level}</span><span>ϟ ${state.stats.stamina.level}</span><span>◉ ${state.stats.focus.level}</span></div></section>`;
+}
+function renderActivity(){
+  if(!state.activity.length)return '';
+  return `<div class="section-heading"><h2>ACTIVITY</h2></div><div class="activity-list">${state.activity.slice(0,4).map(item=>`<div class="activity-item"><span class="activity-symbol">${STATS[item.stat]?.symbol||'+'}</span><div class="activity-detail"><strong>${STATS[item.stat]?.name||''}</strong><small>${formatDate(item.day)}</small></div><span class="activity-change ${item.change<0?'negative':''}">${item.change>0?'+¼':'−¼'}</span></div>`).join('')}</div>`;
+}
+function renderStatus(){
+  return `<p class="eyebrow">PLAYER PROFILE</p>${heroStage(true)}<div class="section-heading"><h2>CORE ATTRIBUTES</h2></div><section class="stat-list" aria-label="Stats">${Object.keys(STATS).map(statusCard).join('')}</section>${renderActivity()}`;
+}
+function renderMissions(){
+  const claimed=state.tasks.filter(t=>t.completedDates.includes(activeDate)).length;
+  return `<p class="eyebrow">DAILY OPERATIONS</p><h1 class="page-title">MISSIONS.</h1><div class="money-card"><div class="eyebrow">TODAY</div><div class="big-value">${claimed} / ${state.tasks.length}</div><div class="money-meta">AVAILABLE ${amount(state.tasks.reduce((sum,t)=>sum+t.cash,0))}</div></div><div class="section-heading"><h2>TASKS</h2><button class="action-btn" data-modal="task">+ ADD</button></div><section class="task-list">${state.tasks.length?state.tasks.map(t=>{
+    const done=t.completedDates.includes(activeDate);
+    return `<article class="task-card ${done?'complete':''}"><div class="task-checkbox" aria-hidden="true">${done?'✓':''}</div><div class="task-copy"><div class="task-title">${escapeHtml(t.title)}</div></div><div class="task-action"><span class="cash-gain">+${amount(t.cash)}</span>${done?'<span class="claimed-label">✓ PAID</span>':`<button class="claim-button" data-action="claim-task" data-id="${escapeHtml(t.id)}">CLAIM</button>`}<button class="small-icon-button" data-action="remove-task" data-id="${escapeHtml(t.id)}" aria-label="Remove ${escapeHtml(t.title)}">×</button></div></article>`;
+  }).join(''):'<div class="empty-state">NO MISSIONS</div>'}</section>`;
+}
+function slotCard(type){
+  const id=state.hero.equipped[type],item=HERO_INDEX[id];
+  return `<div class="equip-slot"><div class="slot-label">${type.toUpperCase()}</div><div class="slot-content">${item?`<canvas data-item="${id}" width="88" height="88" aria-hidden="true"></canvas>`:'<span class="empty-slot-icon">◇</span>'}<div class="slot-text"><strong>${item?escapeHtml(item.name):'NONE'}</strong>${item?`<small class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name}</small>`:''}</div></div>${item?`<button class="action-btn secondary" data-action="unequip" data-id="${type}">UNEQUIP</button>`:''}</div>`;
+}
+function inventoryCard(id){
+  const item=HERO_INDEX[id],equipped=state.hero.equipped[item.type]===id;
+  return `<button class="inventory-card ${equipped?'equipped':''}" data-action="toggle-equip" data-id="${id}"><canvas data-item="${id}" width="88" height="88" aria-hidden="true"></canvas><span><strong>${escapeHtml(item.name)}</strong><small class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name} · ${item.type}</small></span><em>${equipped?'EQUIPPED':'EQUIP'}</em></button>`;
+}
+function renderHero(){
+  return `<p class="eyebrow">CHARACTER // EQUIPMENT</p><h1 class="page-title">HERO.</h1>${heroStage()}<div class="section-heading"><h2>EQUIPPED</h2></div><div class="equip-grid">${HERO_SLOTS.map(slotCard).join('')}</div><div class="section-heading"><h2>INVENTORY</h2><span class="section-aside">${state.hero.owned.length} ITEMS</span></div><div class="hero-inventory">${state.hero.owned.length?state.hero.owned.map(inventoryCard).join(''):'<div class="empty-state">EMPTY INVENTORY</div>'}</div>`;
+}
+function catalogCard(item){
+  const owned=state.hero.owned.includes(item.id),equipped=state.hero.equipped[item.type]===item.id;
+  const disabled=!owned&&state.wallet<item.cost;
+  return `<article class="catalog-card rarity-${item.rarity}"><div class="catalog-art"><canvas data-item="${item.id}" width="88" height="88" aria-hidden="true"></canvas></div><div class="catalog-info"><div class="catalog-name">${escapeHtml(item.name)}</div><span class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name.toUpperCase()}</span><div class="catalog-price">${amount(item.cost)}</div></div><button class="action-btn catalog-button ${owned?'secondary':''}" data-action="${owned?'toggle-equip':'buy-hero'}" data-id="${item.id}" ${disabled?'disabled':''}>${owned?(equipped?'UNEQUIP':'EQUIP'):'BUY'}</button></article>`;
+}
+function renderShop(){
+  const filters=[['weapon','WEAPONS'],['armor','ARMOR'],['companion','COMPANIONS']];
+  return `<p class="eyebrow">HERO ARSENAL</p><h1 class="page-title">STORE.</h1><div class="store-balance"><span>YOUR FUNDS</span><strong>${amount(state.wallet)}</strong></div><div class="store-tabs">${filters.map(([key,label])=>`<button class="store-tab ${storeFilter===key?'active':''}" data-action="store-filter" data-value="${key}">${label}</button>`).join('')}</div>
+  ${Object.keys(RARITIES).map(rarity=>{
+    const items=HERO_ITEMS.filter(item=>item.type===storeFilter&&item.rarity===rarity);
+    return `<div class="rarity-heading ${rarity}"><span>${RARITIES[rarity].name.toUpperCase()}</span><span>${items.length} ITEMS</span></div><section class="catalog-list">${items.map(catalogCard).join('')}</section>`;
+  }).join('')}`;
+}
+function renderSettings(){
+  const themes=[['acid','NEON'],['sunset','VICE'],['ice','ICE'],['mono','MONO']];
+  return `<p class="eyebrow">SYSTEM CONTROL</p><h1 class="page-title">SETTINGS.</h1>
+    <section class="settings-panel"><h2>COLORS</h2><div class="theme-grid">${themes.map(([id,name])=>`<button class="theme-choice ${state.theme===id?'active':''}" data-action="set-theme" data-value="${id}" aria-pressed="${state.theme===id}"><span class="theme-swatch"></span><span>${name}</span></button>`).join('')}</div></section>
+    <section class="settings-panel"><h2>BACKUPS</h2><div class="settings-buttons"><button class="action-btn" data-action="export">EXPORT</button><button class="action-btn secondary" data-action="import">IMPORT</button></div><p class="fine-print">Progress stays in your browser. Export before clearing Safari data or switching devices.</p></section>
+    <section class="settings-panel"><h2>RESET</h2><button class="action-btn danger" data-action="reset">RESET HERO DATA</button></section>
+    <p class="fine-print">HERO VERSION 1.0 · Original pixel art · Not affiliated with Rockstar Games.</p>`;
 }
 
-function statusCard(key) {
-  const stat = state.stats[key];
-  const def = STATS[key];
-  const done = completed(key);
-  return `<article class="stat-card" data-stat="${key}">
-    ${ringMarkup(stat, def.name, key)}
-    <div class="stat-meta">
-      <div class="stat-label">${def.name}</div>
-      <p class="stat-hint">${def.hint}</p>
-      <div class="stat-level">LEVEL <strong>${stat.level}</strong></div>
-      <div class="quarter-count">${stat.quarters} / 4 QUARTERS</div>
-      <div class="stat-actions">
-        ${done ? `<span class="stat-completed">✓ LOGGED TODAY</span><button class="undo-link" data-action="undo-stat" data-id="${key}" aria-label="Undo today's ${def.name} exercise">Undo</button>` : `<button class="action-btn" data-action="log-stat" data-id="${key}">+ LOG ${def.action.toUpperCase()}</button>`}
-      </div>
-    </div>
-  </article>`;
-}
-
-function renderActivity() {
-  if (!state.activity.length) return `<div class="empty-state"><strong>No activity yet</strong>Your first logged session will appear here.</div>`;
-  return `<div class="activity-list">${state.activity.slice(0, 6).map(item => {
-    const def = STATS[item.stat];
-    const title = item.reason === 'completed' ? `${def.name} session completed` : item.reason === 'correction' ? `${def.name} session corrected` : `${def.name} day missed`;
-    return `<div class="activity-item"><span class="activity-symbol">${def.symbol}</span><div class="activity-detail"><strong>${title}</strong><small>${formatDate(item.day)} · Now level ${item.level} (${item.quarters}/4)</small></div><span class="activity-change ${item.change < 0 ? 'negative' : ''}">${item.change > 0 ? '+¼' : '−¼'}</span></div>`;
-  }).join('')}</div>`;
-}
-
-function renderStatus() {
-  const completedCount = Object.keys(STATS).filter(completed).length;
-  const now=Date.now();
-  const fuel=(key)=>Math.max(0,Math.ceil((state.fuelUntil[key]-now)/60000));
-  return `<p class="eyebrow">PLAYER PROFILE // DAILY PROGRESSION</p>
-    <h1 class="page-title">BUILD YOUR<br><span class="outline">CHARACTER.</span></h1>
-    <p class="page-subtitle">Real-life effort. Game-style progression. Your next level is earned one day at a time.</p>
-    <section class="mission-banner" aria-label="Daily progress">
-      <div class="banner-label">DAILY CHECK-IN // ${formatDate(activeDate, { weekday:'short', month:'short', day:'numeric' }).toUpperCase()}</div>
-      <div class="banner-title">${completedCount} OF 3 ACTIVITIES LOGGED</div>
-      <div class="banner-copy">Complete one exercise for each stat today. Uncompleted stats lose one quarter after the day ends.</div>
-      <div class="progress-track" aria-hidden="true"><div class="progress-fill" style="width:${(completedCount / 3)*100}%"></div></div>
-    </section>
-    <div class="section-heading"><h2>Fueled up</h2><span class="section-aside">ONE-HOUR EMBLEMS</span></div>
-    <section class="fuel-panel"><div class="fuel-badges">
-      ${fuel('tea')?`<span class="fuel-badge">⚡ STAMINA · ${fuel('tea')}m</span><span class="fuel-badge focus">◉ FOCUS · ${fuel('tea')}m</span>`:''}
-      ${fuel('protein')?`<span class="fuel-badge health">♥ HEALTH · ${fuel('protein')}m</span>`:''}
-      ${!fuel('tea')&&!fuel('protein')?'<span class="fuel-idle">No active fuel emblems yet.</span>':''}
-    </div><div class="fuel-actions"><button class="action-btn secondary" data-action="fuel" data-value="tea">+ DRANK TEA</button><button class="action-btn secondary" data-action="fuel" data-value="protein">+ ATE PROTEIN</button></div>
-    <p class="fuel-disclaimer">Motivational badges only: not a claim that food or tea boosts your actual abilities. Timers refresh rather than stack.</p></section>
-    <div class="section-heading"><h2>Core attributes</h2><span class="section-aside">+¼ PER SESSION</span></div>
-    <section class="stat-list" aria-label="Stats">${Object.keys(STATS).map(statusCard).join('')}</section>
-    <div class="section-heading"><h2>Recent activity</h2><span class="section-aside">AUTO-SAVED</span></div>
-    ${renderActivity()}
-    <div class="section-heading"><h2>System rules</h2></div>
-    <div class="note-panel"><strong>Four quarters = one level.</strong> A logged exercise earns ¼ for its stat, once per day. Missing a day removes ¼. If a meter is empty, it immediately drops one level and becomes ¾ full at the lower level. The minimum level is 1. Planned rest days currently count as missed days.</div>`;
-}
-
-function renderHome() {
-  const home=state.home;
-  const room=roomAt(home,home.avatar.x,home.avatar.y);
-  const near=nearbyHomeObject(home);
-  const selected=homeSelection?.type==='inventory' ? HOME_ITEMS[homeSelection.item]?.name : homeSelection?.type==='placed' ? HOME_ITEMS[home.placed.find(obj=>obj.id===homeSelection.id)?.item]?.name : null;
-  return `<p class="eyebrow">PIXEL LIVING // THE PROPERTY</p>
-    <h1 class="page-title">YOUR<br><span class="outline">HIDEOUT.</span></h1>
-    <p class="page-subtitle">Walk your character through five spaces. Finish real-life missions, buy furniture, and remodel this little world.</p>
-    <div class="home-hud"><span>🏠 PROPERTY TIER ${home.tier} / 4</span><span>${escapeHtml(room||'Home').toUpperCase()}</span></div>
-    <div class="home-mode-tabs"><button class="home-mode-btn ${homeMode==='walk'?'active':''}" data-action="home-mode" data-value="walk">🎮 WALK & INTERACT</button><button class="home-mode-btn ${homeMode==='decorate'?'active':''}" data-action="home-mode" data-value="decorate">✎ DECORATE</button></div>
-    <div class="home-game-frame"><canvas id="home-canvas" aria-label="Top-down pixel-art home. Use the directional controls to move your character. Tap a tile in decorating mode to place furniture." width="384" height="384"></canvas></div>
-    ${homeMode==='walk'?`<div class="home-controls"><div class="dpad" aria-label="Movement controls"><span></span><button data-action="walk" data-value="up" aria-label="Walk up">▲</button><span></span><button data-action="walk" data-value="left" aria-label="Walk left">◀</button><span class="dpad-center">✦</span><button data-action="walk" data-value="right" aria-label="Walk right">▶</button><span></span><button data-action="walk" data-value="down" aria-label="Walk down">▼</button><span></span></div>
-      <div class="home-interact-panel"><div class="eyebrow">NEARBY</div><strong>${escapeHtml(near?.name||'Explore the rooms')}</strong><p>${near?'Get close and tap INTERACT to use it.':'Walk next to furniture or your cat.'}</p><button class="action-btn" data-action="interact" ${near?'':'disabled'}>✦ INTERACT</button></div></div>`:
-      `<div class="decorate-panel"><p>Choose a stored item, then tap an empty tile. Tap placed furniture to select it; tap another tile to move it. Doors, walls, and occupied spaces stay clear.</p>
-      <div class="decor-toolbar"><button class="action-btn secondary" data-action="rotate-item" ${homeSelection?'':'disabled'}>⟳ ROTATE</button><button class="action-btn secondary" data-action="store-item" ${homeSelection?.type==='placed'?'':'disabled'}>STORE ITEM</button><button class="action-btn ghost" data-action="clear-selection">CANCEL</button></div>
-      <div class="selected-item">${selected?`SELECTED: ${escapeHtml(selected)} · ${homeRotation?'ROTATED':'NORMAL'}`:'TAP A PIECE OF FURNITURE OR PICK FROM INVENTORY'}</div>
-      <h3>YOUR INVENTORY (${home.inventory.length})</h3><div class="inventory-strip">${home.inventory.length?home.inventory.map((id,index)=>`<button class="inventory-chip ${homeSelection?.type==='inventory'&&homeSelection.index===index?'active':''}" data-action="select-inventory" data-id="${escapeHtml(id)}" data-index="${index}">${HOME_ITEMS[id]?.emoji||'□'} ${escapeHtml(HOME_ITEMS[id]?.name||id)}</button>`).join(''):'<span>Empty for now. Buy furniture in the Store tab.</span>'}</div></div>`}
-    ${home.pets.includes('calico')?'<p class="home-pet-note">🐈 Your calico cat lives here permanently. Find it in the living area to give it a pet.</p>':'<p class="home-pet-note">🐾 The calico cat can move in for $1,500 from your Store. No feeding penalties.</p>'}
-    <div class="section-heading"><h2>Property upgrades</h2></div>
-    <div class="home-upgrade-line">${['STARTER','MAKEOVER','REMODEL','EXPAND'].map((part,index)=>`<span class="${index<home.tier?'unlocked':''}">${part}</span>`).join('')}</div>
-    ${home.tier>=2?`<div class="home-palette"><strong>Floor style</strong><div>${['rose','mint','cream','night'].map(id=>`<button data-action="set-floor" data-value="${id}" class="palette-btn ${home.floor===id?'active':''}">${id.toUpperCase()}</button>`).join('')}</div><strong>Wall color</strong><div>${['plum','teal','peach','ink'].map(id=>`<button data-action="set-walls" data-value="${id}" class="palette-btn ${home.walls===id?'active':''}">${id.toUpperCase()}</button>`).join('')}</div></div>`:''}
-    ${home.tier>=3?`<div class="home-partitions"><strong>Remodel partitions</strong><p>Open space between rooms while keeping essential doorways.</p><button class="action-btn secondary" data-action="toggle-wall" data-value="bedroom">${home.partitions.bedroom?'OPEN':'CLOSE'} BEDROOM WALL</button><button class="action-btn secondary" data-action="toggle-wall" data-value="dining">${home.partitions.dining?'OPEN':'CLOSE'} DINING WALL</button></div>`:''}
-    <div class="note-panel">Pixel-art furniture uses a 32-pixel tile grid. Your character and everything you buy are saved on this device with your existing progress. Keyboard arrows or WASD also work on a computer.</div>`;
-}
-
-function renderMissions() {
-  const claimed = state.tasks.filter(task => task.completedDates.includes(activeDate)).length;
-  const potential = state.tasks.reduce((sum, task) => sum + task.cash, 0);
-  return `<p class="eyebrow">DAILY OPERATIONS // TASK BOARD</p>
-    <h1 class="page-title">YOUR<br><span class="outline">MISSIONS.</span></h1>
-    <p class="page-subtitle">Get things done. Earn virtual cash. Spend it on rewards that actually motivate you.</p>
-    <section class="money-card"><div class="eyebrow">TODAY'S POTENTIAL PAYOUT</div><div class="big-value">${amount(potential)}</div><div class="money-meta">${claimed} of ${state.tasks.length} daily tasks claimed · Resets each day</div></section>
-    <div class="section-heading"><h2>Active missions</h2><button class="action-btn" data-modal="task">+ NEW TASK</button></div>
-    <section class="task-list" aria-label="Daily tasks">${state.tasks.length ? state.tasks.map(task => {
-      const done = task.completedDates.includes(activeDate);
-      return `<article class="task-card ${done ? 'complete' : ''}">
-        <div class="task-checkbox" aria-hidden="true">${done ? '✓' : ''}</div>
-        <div class="task-copy"><div class="task-title">${escapeHtml(task.title)}</div><div class="task-description">DAILY MISSION</div></div>
-        <div class="task-action"><span class="cash-gain">+${amount(task.cash)}</span>${done ? '<span class="claimed-label">CLAIMED ✓</span>' : `<button class="claim-button" data-action="claim-task" data-id="${escapeHtml(task.id)}">CLAIM</button>`}<button class="small-icon-button" data-action="remove-task" data-id="${escapeHtml(task.id)}" aria-label="Remove ${escapeHtml(task.title)}">×</button></div>
-      </article>`;
-    }).join('') : '<div class="empty-state"><strong>No missions yet</strong>Create a daily task to start earning cash.</div>'}</section>
-    <div class="section-heading"><h2>How payouts work</h2></div>
-    <div class="note-panel">Each mission can pay out <strong>once per calendar day</strong>. Your cash balance carries over. Tasks don't automatically change Health, Stamina or Focus; log those exercises from the Status screen.</div>`;
-}
-
-function renderShop() {
-  return `<p class="eyebrow">PLAYER ECONOMY // REDEMPTION</p>
-    <h1 class="page-title">REWARD<br><span class="outline">YOURSELF.</span></h1>
-    <p class="page-subtitle">Set your own real-life rewards. The cash is virtual — the motivation is real.</p>
-    <section class="money-card"><div class="eyebrow">AVAILABLE BALANCE</div><div class="big-value">${amount(state.wallet)}</div><div class="money-meta">Earn cash by completing missions. You choose how to spend it.</div></section>
-    <div class="section-heading"><h2>Home furniture & pets</h2><span class="section-aside">PERMANENT UNLOCKS</span></div>
-    <section class="home-shop-list">${Object.entries(HOME_ITEMS).map(([id,item])=>`<article class="home-shop-card"><span class="shop-pixel-icon">${item.emoji}</span><div class="reward-copy"><div class="reward-title">${escapeHtml(item.name)}</div><div class="reward-description">${item.kind==='pet'?'PET · ONE-TIME':'PIXEL FURNITURE'} · ${amount(item.cost)}</div></div><button class="action-btn" data-action="buy-home-item" data-id="${id}" ${state.wallet<item.cost||item.kind==='pet'&&state.home.pets.includes(id)?'disabled':''}>${item.kind==='pet'&&state.home.pets.includes(id)?'OWNED':'BUY'}</button></article>`).join('')}</section>
-    <div class="section-heading"><h2>Renovation shop</h2><span class="section-aside">UPGRADES IN ORDER</span></div>
-    <section class="home-shop-list">${HOME_UPGRADES.map(u=>`<article class="home-shop-card"><span class="shop-pixel-icon">⌂</span><div class="reward-copy"><div class="reward-title">${escapeHtml(u.name)}</div><div class="reward-description">${escapeHtml(u.description)} · ${amount(u.cost)}</div></div><button class="action-btn" data-action="buy-upgrade" ${state.home.tier>=u.tier||state.home.tier!==u.tier-1||state.wallet<u.cost?'disabled':''}>${state.home.tier>=u.tier?'OWNED':'BUY'}</button></article>`).join('')}</section>
-    <div class="section-heading"><h2>Reward shop</h2><button class="action-btn" data-modal="reward">+ NEW REWARD</button></div>
-    <section class="reward-list" aria-label="Available rewards">${state.rewards.length ? state.rewards.map((reward, index) => `
-      <article class="reward-card"><div class="reward-emoji">${['★','✦','◆','◈'][index%4]}</div>
-      <div class="reward-copy"><div class="reward-title">${escapeHtml(reward.title)}</div><div class="reward-description">COST ${amount(reward.cost)}</div></div>
-      <div class="task-action"><button class="action-btn" data-action="redeem" data-id="${escapeHtml(reward.id)}" ${state.wallet < reward.cost ? 'disabled title="Earn more cash to unlock"' : ''}>REDEEM</button><button class="small-icon-button" data-action="remove-reward" data-id="${escapeHtml(reward.id)}" aria-label="Remove ${escapeHtml(reward.title)}">×</button></div>
-      </article>`).join('') : '<div class="empty-state"><strong>No rewards yet</strong>Create your first reward to start saving toward it.</div>'}</section>
-    <div class="section-heading"><h2>Transaction history</h2><span class="section-aside">LATEST 8</span></div>
-    ${state.transactions.length ? `<div class="activity-list">${state.transactions.slice(0,8).map(tx => `<div class="activity-item"><span class="activity-symbol">$</span><div class="activity-detail"><strong>${escapeHtml(tx.title)}</strong><small>${formatDate(tx.day)}</small></div><span class="activity-change ${tx.amount < 0 ? 'negative' : ''}">${tx.amount < 0 ? '−' : '+'}${amount(Math.abs(tx.amount))}</span></div>`).join('')}</div>` : '<div class="empty-state"><strong>Nothing spent or earned yet</strong>Your cash history will show up here.</div>'}
-    <div class="section-heading"><h2>A note on rewards</h2></div>
-    <div class="note-panel">Redeeming a reward deducts virtual cash and records the purchase. The app doesn't purchase anything or automatically grant real-world privileges.</div>`;
-}
-
-function renderSettings() {
-  const themes = [{ id:'acid', name:'Neon' },{ id:'sunset', name:'Vice' },{ id:'ice', name:'Ice' },{ id:'mono', name:'Mono' }];
-  return `<p class="eyebrow">SYSTEM CONTROL // CUSTOMIZATION</p>
-    <h1 class="page-title">YOUR<br><span class="outline">SETTINGS.</span></h1>
-    <p class="page-subtitle">Change the look instantly. Your stats, daily rules, and rewards keep working the same way.</p>
-    <section class="settings-panel"><h2>Visual themes</h2><p>Tap a colorway to change the entire interface.</p><div class="theme-grid">
-      ${themes.map(theme => `<button class="theme-choice ${theme.id === state.theme ? 'active' : ''}" data-action="set-theme" data-value="${theme.id}" aria-pressed="${theme.id === state.theme}"><span class="theme-swatch"></span><span>${theme.name}</span></button>`).join('')}
-    </div></section>
-    <section class="settings-panel"><h2>Save your progress</h2><p>Your data is stored only in this browser on this device. Back up regularly, especially before clearing Safari data or changing phones.</p><div class="settings-buttons"><button class="action-btn" data-action="export">EXPORT BACKUP</button><button class="action-btn secondary" data-action="import">IMPORT BACKUP</button></div></section>
-    <section class="settings-panel"><h2>Progression rules</h2><p>These rules are built into the tracking engine and don't change with the theme.</p><ul class="rule-list"><li>One Health, Stamina, and Focus session each per day</li><li>Completed session: <strong>+¼ meter</strong></li><li>Four quarters: <strong>level up, reset to 0/4</strong></li><li>Missed calendar day: <strong>−¼ meter</strong></li><li>At 0/4: <strong>level down, new meter at 3/4</strong></li><li>Level cannot fall below 1</li></ul></section>
-    <section class="settings-panel"><h2>Install on iPhone</h2><p>In Safari, open your published app, tap Share, then Add to Home Screen. Choose Open as Web App if prompted. The app can then launch from your Home Screen.</p><div class="fine-print">Version 2.0 · Original game-inspired interface and pixel art. Not affiliated with Rockstar Games or Grand Theft Auto.</div></section>
-    <section class="settings-panel"><h2>Start over</h2><p>Deleting local data is permanent unless you have exported a backup.</p><button class="action-btn danger" data-action="reset">RESET ALL DATA</button></section>`;
-}
-
-function openEditor(kind) {
-  const task = kind === 'task';
-  dialog.innerHTML = `<form id="editor-form" data-kind="${kind}">
-    <h2 id="dialog-title">${task ? 'NEW DAILY MISSION' : 'NEW REWARD'}</h2>
-    <p>${task ? 'Create a task that earns virtual cash each day.' : 'Choose a treat or privilege that you can redeem with earned cash.'}</p>
-    <div class="field"><label for="item-name">${task ? 'Task name' : 'Reward name'}</label><input id="item-name" name="title" placeholder="${task ? 'e.g. Finish my readings' : 'e.g. Go out for coffee'}" maxlength="80" required></div>
-    <div class="field"><label for="item-value">${task ? 'Cash payout' : 'Reward cost'} ($)</label><input id="item-value" name="value" type="number" inputmode="numeric" min="1" max="10000" step="1" value="${task ? 50 : 250}" required></div>
-    <div class="dialog-actions"><button class="action-btn secondary" type="button" data-action="close-modal">CANCEL</button><button class="action-btn" type="submit">${task ? 'ADD MISSION' : 'ADD REWARD'}</button></div>
-  </form>`;
+function openEditor(){
+  dialog.innerHTML=`<form id="editor-form"><h2 id="dialog-title">NEW MISSION</h2><div class="field"><label for="item-name">TASK</label><input id="item-name" name="title" maxlength="80" required></div><div class="field"><label for="item-value">PAYOUT ($)</label><input id="item-value" name="value" type="number" inputmode="numeric" min="1" max="10000" value="50" required></div><div class="dialog-actions"><button type="button" class="action-btn secondary" data-action="close-modal">CANCEL</button><button type="submit" class="action-btn">SAVE</button></div></form>`;
   dialog.showModal();
 }
-
-function uniqueId(prefix) { return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`; }
-
-function changeStat(key, undo = false) {
-  if (!STATS[key]) return;
-  if (undo && !confirm(`Undo today's ${STATS[key].name} session? This will remove one quarter.`)) return;
-  const before = { ...state.stats[key] };
-  const changed = undo ? undoExercise(state, key, activeDate) : logExercise(state, key, activeDate);
-  if (!changed) return;
-  save(); render();
-  const after = state.stats[key];
-  if (undo) showToast(`${STATS[key].name} session undone`);
-  else if (after.level > before.level) showToast(`${STATS[key].name.toUpperCase()} LEVEL UP! Now level ${after.level}`);
-  else showToast(`${STATS[key].name} +¼ progress`);
+function changeStat(key,undo=false){
+  if(!STATS[key])return;
+  if(undo&&!confirm('Undo today’s exercise?'))return;
+  const before=state.stats[key].level;
+  const changed=undo?undoExercise(state,key,activeDate):logExercise(state,key,activeDate);
+  if(!changed)return;
+  save();render();
+  showToast(undo?'CORRECTED':state.stats[key].level>before?`${STATS[key].name.toUpperCase()} LEVEL UP!`:'+¼');
 }
-
-function claimTask(id) {
-  const task = state.tasks.find(item => item.id === id);
-  if (!task || task.completedDates.includes(activeDate)) return;
+function claimTask(id){
+  const task=state.tasks.find(t=>t.id===id);
+  if(!task||task.completedDates.includes(activeDate))return;
   task.completedDates.push(activeDate);
-  state.wallet += task.cash;
-  state.transactions.unshift({ id:uniqueId('tx'), title:task.title, amount:task.cash, day:activeDate });
-  state.transactions.length = Math.min(200, state.transactions.length);
-  save(); render(); showToast(`Mission complete: +${amount(task.cash)}`);
-}
-
-function redeem(id) {
-  const reward = state.rewards.find(item => item.id === id);
-  if (!reward || state.wallet < reward.cost) return;
-  if (!confirm(`Redeem “${reward.title}” for ${amount(reward.cost)} virtual cash?`)) return;
-  state.wallet -= reward.cost;
-  state.transactions.unshift({ id:uniqueId('tx'), title:`Redeemed: ${reward.title}`, amount:-reward.cost, day:activeDate });
-  state.transactions.length = Math.min(200, state.transactions.length);
-  save(); render(); showToast(`Redeemed: ${reward.title}`);
-}
-
-function spendHomeItem(id) {
-  const item=HOME_ITEMS[id];
-  if(!item || !purchaseHomeItem(state,id)) return showToast('Not enough cash, or already owned');
-  state.transactions.unshift({id:uniqueId('tx'),title:`Home: ${item.name}`,amount:-item.cost,day:activeDate});
+  state.wallet+=task.cash;
+  state.transactions.unshift({id:uniqueId('tx'),title:task.title,amount:task.cash,day:activeDate});
   state.transactions.length=Math.min(200,state.transactions.length);
-  save();render();showToast(item.kind==='pet'?'Your calico cat moved in!':'Purchased! Place it from Home → Decorate.');
+  save();render();showToast(`+${amount(task.cash)}`);
+}
+function buyItem(id){
+  const item=HERO_INDEX[id];
+  if(!item||state.hero.owned.includes(id)||state.wallet<item.cost)return;
+  if(!confirm(`Buy ${item.name} for ${amount(item.cost)}?`))return;
+  if(!buyHeroItem(state,id))return;
+  state.transactions.unshift({id:uniqueId('tx'),title:`Purchased: ${item.name}`,amount:-item.cost,day:activeDate});
+  state.transactions.length=Math.min(200,state.transactions.length);
+  save();render();showToast(`${item.name.toUpperCase()} EQUIPPED`);
+}
+function toggleEquip(id){
+  if(!toggleHeroEquip(state.hero,id))return;
+  save();render();showToast(state.hero.equipped[HERO_INDEX[id].type]===id?'EQUIPPED':'UNEQUIPPED');
+}
+function exportBackup(){
+  const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  const href=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=href;a.download=`lifestyle-hero-backup-${activeDate}.json`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(href),2000);showToast('BACKUP READY');
 }
 
-function upgradeHome() {
-  const next=HOME_UPGRADES.find(u=>u.tier===state.home.tier+1);
-  if(!next || !purchaseHomeUpgrade(state)) return showToast('Earn more cash to unlock this renovation');
-  state.transactions.unshift({id:uniqueId('tx'),title:next.name,amount:-next.cost,day:activeDate});
-  save();render();showToast(`${next.name} unlocked!`);
-}
-
-function stepHome(direction) {
-  const move={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[direction];
-  if(!move) return;
-  if(movePlayer(state.home,...move)) save();
-  render();
-}
-
-function interactAtHome() {
-  const found=nearbyHomeObject(state.home);
-  if(!found) return showToast('Walk up to furniture or a pet first');
-  const messages={pet:'You petted your calico cat. Purr! ♥',bed:'Time to recharge. Your room feels cozy.',sofa:'You settled in on the sofa.',television:'The television flickers on.',console:'Gaming mode activated!',dining:'You sit down for a meal.',counter:'You admire your neat kitchen.',utensils:'Everything is ready for cooking.',kittybed:'Your kitty has a cozy place to sleep.',tree:'You take in the fresh garden air.',plant:'Your plant looks lovely.',bench:'You relax on the garden bench.'};
-  showToast(messages[found.kind]||`You interacted with ${found.name}`);
-}
-
-function tapHomeCanvas(event) {
-  if(activeTab!=='home'||homeMode!=='decorate') return;
-  const canvas=event.target;
-  const rect=canvas.getBoundingClientRect();
-  const x=Math.floor((event.clientX-rect.left)/rect.width*homeSize(state.home));
-  const y=Math.floor((event.clientY-rect.top)/rect.height*homeSize(state.home));
-  const found=objectAt(state.home,x,y);
-  if(found) {
-    homeSelection={type:'placed',id:found.id};homeRotation=found.rotation;
-    render();return;
-  }
-  if(!homeSelection) return showToast('Select an item from inventory or tap existing furniture');
-  if(homeSelection.type==='inventory') {
-    if(!placeInventoryItem(state.home,homeSelection.item,x,y,homeRotation)) return showToast('Cannot place here — keep walls and walkways clear');
-    homeSelection=null;homeRotation=0;
-    save();render();showToast('Furniture placed!');
-  } else {
-    if(!movePlacedItem(state.home,homeSelection.id,x,y,homeRotation)) return showToast('That tile is blocked or outside the room');
-    homeSelection=null;homeRotation=0;
-    save();render();showToast('Furniture moved!');
-  }
-}
-
-function exportBackup() {
-  const blob = new Blob([JSON.stringify({ ...state, exportedAt:new Date().toISOString() }, null, 2)], { type:'application/json' });
-  const href = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = href; a.download = `lifestyle-tracker-backup-${activeDate}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(href), 2000);
-  showToast('Backup ready to save');
-}
-
-document.addEventListener('click', event => {
-  if(event.target?.id==='home-canvas') {tapHomeCanvas(event);return;}
-  const tab = event.target.closest('[data-tab]');
-  if (tab && tabs.includes(tab.dataset.tab)) {
-    activeTab = tab.dataset.tab; render(); window.scrollTo({ top:0, behavior:'auto' }); return;
-  }
-  const opener = event.target.closest('[data-modal]');
-  if (opener) { openEditor(opener.dataset.modal); return; }
-  const button = event.target.closest('[data-action]');
-  if (!button) return;
-  const { action, id, value } = button.dataset;
-  switch (action) {
-    case 'log-stat': changeStat(id); break;
-    case 'undo-stat': changeStat(id, true); break;
-    case 'claim-task': claimTask(id); break;
-    case 'buy-home-item': spendHomeItem(id); break;
-    case 'buy-upgrade': upgradeHome(); break;
-    case 'walk': stepHome(value); break;
-    case 'interact': interactAtHome(); break;
-    case 'home-mode':homeMode=value;homeSelection=null;homeRotation=0;render();break;
-    case 'select-inventory': homeSelection={type:'inventory',item:id,index:Number(button.dataset.index)};homeRotation=0;render();break;
-    case 'rotate-item': if(homeSelection){homeRotation=1-homeRotation;render();}break;
-    case 'store-item':if(homeSelection?.type==='placed'&&storePlacedItem(state.home,homeSelection.id)){homeSelection=null;homeRotation=0;save();render();showToast('Furniture returned to inventory');}break;
-    case 'clear-selection':homeSelection=null;homeRotation=0;render();break;
-    case 'set-floor':if(state.home.tier>=2){state.home.floor=value;save();render();}break;
-    case 'set-walls':if(state.home.tier>=2){state.home.walls=value;save();render();}break;
-    case 'toggle-wall':if(state.home.tier>=3&&['bedroom','dining'].includes(value)){state.home.partitions[value]=!state.home.partitions[value];save();render();}break;
-    case 'fuel':if(['tea','protein'].includes(value)){state.fuelUntil[value]=Date.now()+60*60*1000;save();render();showToast('One-hour emblems activated');}break;
-    case 'redeem': redeem(id); break;
-    case 'remove-task':
-      if (confirm('Remove this daily task? Previously earned cash will stay in your wallet.')) { state.tasks = state.tasks.filter(item => item.id !== id); save(); render(); }
-      break;
-    case 'remove-reward':
-      if (confirm('Remove this reward from your shop?')) { state.rewards = state.rewards.filter(item => item.id !== id); save(); render(); }
-      break;
-    case 'set-theme': state.theme = value; save(); render(); break;
-    case 'close-modal': dialog.close(); break;
-    case 'export': exportBackup(); break;
-    case 'import': importFile.click(); break;
-    case 'reset':
-      if (confirm('Reset ALL stats, tasks, rewards, and earned cash? This cannot be undone without a backup.')) {
-        state = initialState(activeDate); save(); render(); showToast('New character started');
-      }
-      break;
+document.addEventListener('click',event=>{
+  const tab=event.target.closest('[data-tab]');
+  if(tab&&tabs.includes(tab.dataset.tab)){activeTab=tab.dataset.tab;render();window.scrollTo({top:0,behavior:'auto'});return;}
+  const modal=event.target.closest('[data-modal]');if(modal){openEditor();return;}
+  const button=event.target.closest('[data-action]');if(!button)return;
+  const {action,id,value}=button.dataset;
+  switch(action){
+    case 'log-stat':changeStat(id);break;
+    case 'undo-stat':changeStat(id,true);break;
+    case 'claim-task':claimTask(id);break;
+    case 'buy-hero':buyItem(id);break;
+    case 'toggle-equip':toggleEquip(id);break;
+    case 'unequip':if(unequipHeroSlot(state.hero,id)){save();render();showToast('UNEQUIPPED');}break;
+    case 'store-filter':storeFilter=value;render();break;
+    case 'set-theme':state.theme=value;save();render();break;
+    case 'remove-task':if(confirm('Remove this task?')){state.tasks=state.tasks.filter(t=>t.id!==id);save();render();}break;
+    case 'close-modal':dialog.close();break;
+    case 'export':exportBackup();break;
+    case 'import':importFile.click();break;
+    case 'reset':if(confirm('Reset hero stats, missions, funds and equipment? Your original home version is unaffected.')){state=initialState(activeDate);save();render();showToast('HERO RESET');}break;
   }
 });
 
-dialog.addEventListener('submit', event => {
-  event.preventDefault();
-  const form = event.target;
-  if (form.id !== 'editor-form') return;
-  const values = new FormData(form);
-  const title = String(values.get('title') || '').trim().slice(0,80);
-  const value = Math.floor(Number(values.get('value')));
-  if (!title || !Number.isInteger(value) || value < 1 || value > 10000) return;
-  if (form.dataset.kind === 'task') {
-    if (state.tasks.length >= 150) return showToast('Maximum 150 tasks reached');
-    state.tasks.push({ id:uniqueId('task'), title, cash:value, completedDates:[] });
-  } else {
-    if (state.rewards.length >= 150) return showToast('Maximum 150 rewards reached');
-    state.rewards.push({ id:uniqueId('reward'), title, cost:value });
-  }
-  dialog.close(); save(); render(); showToast(form.dataset.kind === 'task' ? 'Mission added' : 'Reward added');
+dialog.addEventListener('submit',event=>{
+  event.preventDefault();const form=event.target;if(form.id!=='editor-form')return;
+  const values=new FormData(form),title=String(values.get('title')||'').trim().slice(0,80),cash=Math.floor(Number(values.get('value')));
+  if(!title||!Number.isInteger(cash)||cash<1||cash>10000)return;
+  if(state.tasks.length>=150)return showToast('MAXIMUM TASKS REACHED');
+  state.tasks.push({id:uniqueId('task'),title,cash,completedDates:[]});
+  dialog.close();save();render();showToast('MISSION ADDED');
 });
-
-dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-
-importFile.addEventListener('change', async () => {
-  const file = importFile.files?.[0];
-  if (!file) return;
-  try {
-    const raw = JSON.parse(await file.text());
-    if (![1,2].includes(raw?.version) || !raw.stats?.health || !raw.stats?.stamina || !raw.stats?.focus) throw new Error('Not a Lifestyle Tracker backup');
-    if (!confirm('Replace all current progress with this backup? Export your current data first if you want to keep it.')) return;
-    state = hydrate(raw, activeDate);
-    syncDay(); save(); render(); showToast('Backup restored successfully');
-  } catch { alert('This file is not a valid Lifestyle Tracker backup. Your current data was not changed.'); }
-  finally { importFile.value = ''; }
+dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+importFile.addEventListener('change',async()=>{
+  const file=importFile.files?.[0];if(!file)return;
+  try{
+    const raw=JSON.parse(await file.text());
+    if(![1,2,3].includes(raw?.version)||!raw.stats?.health||!raw.stats?.stamina||!raw.stats?.focus)throw new Error('Invalid backup');
+    if(!confirm('Replace this hero profile with your backup?'))return;
+    state=hydrate(raw,activeDate);syncDay();save();render();showToast('BACKUP RESTORED');
+  }catch{alert('Invalid Lifestyle Tracker backup. Your data was not changed.');}
+  finally{importFile.value='';}
 });
-
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { syncDay(); render(); } });
-setInterval(() => { if (dateKey() !== activeDate) { syncDay(); render(); } else if(activeTab==='status' && (state.fuelUntil.tea>Date.now()||state.fuelUntil.protein>Date.now())) render(); }, 60_000);
-
-document.addEventListener('keydown', event => {
-  if(activeTab!=='home'||homeMode!=='walk'||dialog.open||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
-  const key={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right'}[event.key];
-  if(key){event.preventDefault();stepHome(key);}
-  if(event.key===' '){event.preventDefault();interactAtHome();}
-});
-
-syncDay();
-save();
-render();
-
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncDay();render();}});
+setInterval(()=>{if(dateKey()!==activeDate){syncDay();render();}},60000);
+syncDay();save();render();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
 
   </script>
 </body>
