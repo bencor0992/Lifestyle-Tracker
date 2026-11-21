@@ -229,6 +229,16 @@ button { touch-action: manipulation; }
 .stage-attributes span:nth-child(2) { color:#80d9cf; }
 .stage-attributes span:nth-child(3) { color:#a68af0; }
 .hero-stage.compact .stage-attributes { max-width:300px; }
+.hero-dev-tag { position:absolute; top:46px; right:10px; z-index:2; font-size:9px; letter-spacing:.1em; font-weight:900; color:#221526; background:#eab3ff; padding:5px 7px; border-radius:3px; }
+.dev-banner { margin:10px 0; padding:12px; border:1px solid #aa75cf; border-radius:6px; background:#372340; color:#f7d5ff; font-size:12px; font-weight:800; }
+.dev-grid { display:grid; gap:10px; margin:14px 0; }
+.dev-stat-row { display:grid; grid-template-columns:1fr 72px 64px; align-items:center; gap:7px; }
+.dev-stat-row label { font-size:12px; font-weight:900; }
+.dev-stat-row input { width:100%; min-width:0; padding:10px 7px; color:#f9e9f6; background:#1b1725; border:1px solid #685071; border-radius:5px; font-size:14px; }
+.dev-stat-row-head { display:grid; grid-template-columns:1fr 72px 64px; gap:7px; font-size:10px; font-weight:800; color:#cab1d1; }
+.dev-buttons { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.dev-buttons .action-btn { flex:1 1 115px; }
+.dev-hint { font-size:11px; line-height:1.5; color:#cfbacf; margin:11px 0 0; }
 .stat-card { min-height:145px; }
 .stat-meta .stat-label { margin-bottom:8px; }
 .stat-meta .stat-level { margin-top:0; }
@@ -446,6 +456,10 @@ const LEGACY_ITEMS=[
 const HERO_ITEMS=[...Object.keys(RARITIES).flatMap(rarity=>[...WEAPON_TYPES,...ARMOR_TYPES].map(base=>variant(base,rarity))),...COMPANIONS];
 const HERO_INDEX=Object.fromEntries([...HERO_ITEMS,...LEGACY_ITEMS].map(item=>[item.id,item]));
 const HERO_SLOTS=['weapon','armor','shield','companion'];
+
+// DEVELOPER BUILD SWITCH: change true to false for a normal release.
+// The temporary preview never changes saved stats, purchased items, or wallet.
+const DEV_TOOLS_ENABLED = true;
 
 function initialHero(){return {owned:[],equipped:{weapon:null,armor:null,shield:null,companion:null}};}
 function hydrateHero(input){
@@ -703,29 +717,32 @@ function drawFocusProgress(c,level){
     paint(c,57,56,3,3,'#d2a1b5');paint(c,84,56,3,3,'#d2a1b5');
     if(f<.16){paint(c,91,85,3,5,'#90718b');paint(c,97,89,4,2,'#90718b');}
   }
-  if(f>.27&&!loadedAtlas('hero-focus-atlas')){
-    // Intentional highlights at the eyes, not an unrelated magic effect.
-    const eyes='#eec9f1',p=1+Math.round(f*2);
-    paint(c,132,75,p,2,eyes);paint(c,145,75,p,2,eyes);
-    if(f>.62){
-      paint(c,172,59,3,10,'#bd94db');paint(c,168,63,11,3,'#bd94db');
-      paint(c,80,102,3,7,'#9d7cc5');paint(c,77,105,9,2,'#9d7cc5');
-    }
-    if(f>.87){
-      paint(c,187,80,2,7,'#edcaff');paint(c,184,83,8,2,'#edcaff');
+  if(f>.27){
+    // Every Focus increase reveals another ordered, outward-facing pixel glint.
+    // These sit outside the silhouette, so they never duplicate the face.
+    const glints=[[181,57],[77,108],[197,130],[60,157],[190,188],[84,48],[202,93]];
+    for(let i=0;i<Math.min(glints.length,Math.ceil(f*7));i++){
+      const [x,y]=glints[i],glow=i%2?'#a18bd4':'#dcc2ff';
+      paint(c,x,y,3,7,glow);paint(c,x-3,y+3,9,2,glow);
     }
   }
 }
 
-function drawFocusFace(c,level){
-  const atlas=loadedAtlas('hero-focus-atlas');
-  if(!atlas)return;
-  const focus=Math.max(1,Number(level)||1),f=visualPower(focus);
-  const stage=focus>=12?3:focus>=8?2:focus>=4?1:0;
-  const sw=atlas.naturalWidth/4;
-  // Portraits are composited with actual pixel-art facial expressions: unfocused
-  // half-closed gaze, recovery, alertness, then a sharp deliberate stare.
-  c.drawImage(atlas,sw*stage,0,sw,atlas.naturalHeight,99,29-f*3,70,90);
+function drawFocusFace(c,level,stage=0){
+  // Draw directly on the existing face. The older full portrait atlas included
+  // a second head/neck at a different scale and caused doubled-face artifacts.
+  const f=visualPower(level);
+  const eye='#302934';
+  const eyeX=[143,129,133,128][stage],eyeY=[65,63,63,63][stage];
+  if(f<.27){
+    paint(c,eyeX,eyeY,6,2,eye);paint(c,eyeX+11,eyeY+1,6,2,eye);
+    if(f<.1){paint(c,eyeX-2,eyeY+5,3,2,'#a16b68');paint(c,eyeX+16,eyeY+5,3,2,'#a16b68');}
+  }else{
+    const glow=f>.66?'#c6b3ff':'#94d4df';
+    paint(c,eyeX+3,eyeY+1,2+Math.round(f*2),2,glow);
+    paint(c,eyeX+14,eyeY+1,2+Math.round(f*2),2,glow);
+    if(f>.82){paint(c,eyeX+16,eyeY-6,2,5,'#ddc0ff');paint(c,eyeX+13,eyeY-3,8,2,'#ddc0ff');}
+  }
 }
 
 function drawStaminaProgress(c,level){
@@ -747,6 +764,53 @@ function drawStaminaProgress(c,level){
   }
 }
 
+// Each atlas animal has different transparent margins. Trim those margins and
+// fit the entire creature into its own left-side stage area, without clipping
+// tails, wings or ears against the frame or the hero.
+const companionArtBounds=new Map();
+function companionBounds(atlas,index){
+  if(companionArtBounds.has(index))return companionArtBounds.get(index);
+  const col=index%4,row=Math.floor(index/4);
+  const sx=Math.round(col*atlas.naturalWidth/4),sy=Math.round(row*atlas.naturalHeight/2);
+  const sw=Math.round((col+1)*atlas.naturalWidth/4)-sx;
+  const sh=Math.round((row+1)*atlas.naturalHeight/2)-sy;
+  const tmp=document.createElement('canvas');tmp.width=sw;tmp.height=sh;
+  const ctx=tmp.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(atlas,sx,sy,sw,sh,0,0,sw,sh);
+  const pixels=ctx.getImageData(0,0,sw,sh).data;
+  let minX=sw,minY=sh,maxX=-1,maxY=-1;
+  for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){
+    if(pixels[(y*sw+x)*4+3]<24)continue;
+    minX=Math.min(minX,x);minY=Math.min(minY,y);
+    maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);
+  }
+  const b=maxX<0?{sx,sy,sw,sh}:{
+    sx:sx+Math.max(0,minX-2),sy:sy+Math.max(0,minY-2),
+    sw:Math.min(sw,maxX+3)-Math.max(0,minX-2),
+    sh:Math.min(sh,maxY+3)-Math.max(0,minY-2),
+  };
+  companionArtBounds.set(index,b);return b;
+}
+function drawStageCompanion(c,item){
+  const flying=['bird','owl'].includes(item.shape);
+  const mythical=['dragon','griffin'].includes(item.shape);
+  const maxW=mythical?94:flying?72:84,maxH=mythical?101:flying?75:83;
+  const right=mythical?101:95,bottom=flying?251:283;
+  const atlas=loadedAtlas('hero-companion-atlas'),index=COMPANION_ORDER.indexOf(item.id);
+  if(atlas&&index>=0){
+    const b=companionBounds(atlas,index);
+    const scale=Math.min(maxW/b.sw,maxH/b.sh);
+    const w=b.sw*scale,h=b.sh*scale;
+    c.drawImage(atlas,b.sx,b.sy,b.sw,b.sh,right-maxW+(maxW-w)/2,bottom-h,w,h);
+  }else{
+    c.save();c.translate(right-maxW,bottom-maxH);
+    c.scale(Math.min(maxW/78,maxH/80),Math.min(maxW/78,maxH/80));
+    drawPet(c,item,9,28,1);
+    c.restore();
+  }
+  if(!flying){paint(c,17,284,64,2,'#201723');paint(c,25,286,48,2,'#493448');}
+}
+
 function drawSpriteHero(c,stats,armor,weapon,shield,pet){
   const atlas=loadedAtlas('hero-health-atlas');
   if(!atlas)return false;
@@ -756,19 +820,33 @@ function drawSpriteHero(c,stats,armor,weapon,shield,pet){
   const stagePct=next===lower?0:Math.min(1,(health-lower)/(next-lower));
   const scaleX=1+stagePct*.035;
   drawSpriteBackdrop(c);
-  // Capes are behind the body. Equipment does not erase the underlying physical level.
-  if(armor&&['epic','legendary'].includes(armor.rarity))cloak(c,armor,s,visualPower(health));
-  if(pet)drawPet(c,pet,11,200,1.07);
-  if(weapon)drawWeapon(c,weapon,165,173);
+  // Companion and cape are behind the hero. Foreground gear uses the same
+  // transformation as the body so it follows each Stamina posture.
+  if(pet)drawStageCompanion(c,pet);
   c.save();
   // Low Stamina hunches the same body sprite forward; each stamina level reduces the lean.
   c.translate(127,274);c.transform(1,0,-.16*(1-s),1,0,0);c.translate(-127,-274);
   c.translate(129,0);c.scale(scaleX,1);c.translate(-129,0);
+  if(armor&&(['epic','legendary'].includes(armor.rarity)||['cloak','mantle','regent'].includes(armor.shape)))cloak(c,armor,s,visualPower(health));
   const w=atlas.naturalWidth/2,h=atlas.naturalHeight/2;
   c.drawImage(atlas,(stage%2)*w,Math.floor(stage/2)*h,w,h,(stage%2)*40,28+7*(1-s),240,257-7*(1-s));
-  drawFocusFace(c,stats.focus.level);
+  drawFocusFace(c,stats.focus.level,stage);
   if(armor)drawArmor(c,armor,129,105,27+Math.round(visualPower(health)*7),20);
-  if(shield)drawShield(c,shield,96,142,1.05);
+  if(shield){
+    drawShield(c,shield,88,148,.94);
+    // Left fingers grip the inner edge of the shield.
+    paint(c,105,175,6,7,SKIN_SHADOW);paint(c,105,176,4,4,SKIN_LIGHT);
+  }
+  if(weapon){
+    // Grip is anchored at the sprite's right wrist (not in the backdrop).
+    const handX=[153,155,161,166][stage]+Math.round(stagePct),handY=177+Math.round((1-s)*3);
+    drawWeapon(c,weapon,handX,handY);
+    // Overlay the fingers last: the handle visibly passes through the fist.
+    outlined(c,[[handX-7,handY-5],[handX+2,handY-6],[handX+7,handY-1],[handX+5,handY+7],[handX-5,handY+7],[handX-8,handY+2]],SKIN_SHADOW,2);
+    paint(c,handX-5,handY-4,9,4,SKIN_LIGHT);
+    paint(c,handX-3,handY+1,8,3,SKIN);
+  }
+  if(armor&&(['plate','halfplate','splint','aegis','regent'].includes(armor.shape)||armor.group==='Heavy Armor'&&armor.rarity==='legendary'))drawHelmet(c,[151,130,137,134][stage],61,armor);
   c.restore();
   drawStaminaProgress(c,stats.stamina.level);
   drawFocusProgress(c,stats.focus.level);
@@ -785,7 +863,7 @@ function drawHero(canvas,stats,equipment) {
   if(drawSpriteHero(c,stats,armor,weapon,shield,pet))return canvas;
   backdrop(c,h,s,f);
   if(armor && (armor.rarity==='legendary'||armor.rarity==='epic'||['cloak','mantle','regent'].includes(armor.shape))) cloak(c,armor,s,h);
-  if(pet) drawPet(c,pet,12,209,1.02);
+  if(pet) drawStageCompanion(c,pet);
   drawCharacter(c,h,s,f,armor,weapon,shield);
   return canvas;
 }
@@ -960,6 +1038,34 @@ function drawArmor(c,item,cx,top,shoulder,waist) {
   if(['epic','legendary'].includes(rank)){
     outlined(c,[[cx-8,top+20],[cx,top+11],[cx+8,top+20],[cx,top+28]],edge,2);
     line(c,cx-2,top+18,4,6,'#fff5ce');
+  }
+  // Shape-specific tailoring keeps twelve armor types visibly distinct while
+  // preserving the character's shoulder, torso, elbow and hip landmarks.
+  if(sh==='wraps'){
+    for(let i=0;i<3;i++){line(c,cx-shoulder+12,top+17+i*11,shoulder*2-24,4,'#d9bda3');line(c,cx-shoulder+14,top+20+i*11,shoulder*2-28,2,'#9a806d');}
+  }
+  if(sh==='padded')for(let row=0;row<4;row++){
+    for(let col=0;col<4;col++)paint(c,cx-13+col*8,top+18+row*9,2,5,(row+col)%2?'#b4a295':'#5f5661');
+  }
+  if(['leather','studded','hide','cloak','mantle'].includes(sh)){
+    line(c,cx-shoulder+11,top+9,7,44,'#503b3b');line(c,cx+shoulder-18,top+9,7,44,'#503b3b');
+    line(c,cx-shoulder+13,top+13,3,36,'#c49a6f');line(c,cx+shoulder-16,top+13,3,36,'#c49a6f');
+  }
+  if(sh==='hide')for(let i=0;i<6;i++)poly(c,[[cx-17+i*6,top+54],[cx-15+i*6,top+61],[cx-12+i*6,top+54]],'#d7be91');
+  if(sh==='scale')for(let row=0;row<4;row++)for(let col=0;col<5;col++){
+    const x=cx-15+col*7+(row%2?2:0),y=top+18+row*8;
+    outlined(c,[[x-3,y],[x+3,y],[x+2,y+6],[x,y+9],[x-2,y+6]],row%2?'#7f8b9a':'#a9bcc7',1);
+  }
+  if(['breastplate','halfplate','plate','aegis','regent'].includes(sh)){
+    outlined(c,[[cx-10,top+24],[cx,top+31],[cx+10,top+24],[cx+8,top+46],[cx,top+51],[cx-8,top+46]],rank==='legendary'?'#d7a75a':'#8794a7',2);
+    line(c,cx-2,top+33,4,13,rank==='legendary'?'#fff0aa':'#e6ebea');
+  }
+  if(sh==='splint')for(let i=-2;i<=2;i++){
+    line(c,cx+i*7-1,top+25,4,30,i%2?edge:METAL_SHADOW);
+  }
+  if(['cloak','mantle','regent'].includes(sh)){
+    outlined(c,[[cx-shoulder+5,top+6],[cx-10,top+11],[cx-11,top+57],[cx-shoulder+3,top+64]],item.trim||edge,2);
+    outlined(c,[[cx+shoulder-5,top+6],[cx+10,top+11],[cx+11,top+57],[cx+shoulder-3,top+64]],item.trim||edge,2);
   }
 }
 
@@ -1229,6 +1335,15 @@ let storeQuery='';
 let activeDate=dateKey();
 let toastTimer;
 let state=loadState();
+// Preview data lives only in memory: refreshing/disabling restores real progress.
+let devMode=false;
+let devPreview=null;
+function activeStats(){return devMode&&devPreview?devPreview.stats:state.stats;}
+function activeEquipment(){return devMode&&devPreview?devPreview.equipped:state.hero.equipped;}
+function freshDevPreview(){return {
+  stats:Object.fromEntries(Object.entries(state.stats).map(([key,value])=>[key,{...value}])),
+  equipped:{...state.hero.equipped},
+};}
 
 function loadState(){
   try{
@@ -1261,7 +1376,7 @@ function render(){
   walletTop.textContent=amount(state.wallet);
   const views={status:renderStatus,missions:renderMissions,hero:renderHero,shop:renderShop,settings:renderSettings};
   screen.innerHTML=views[activeTab]();
-  if(activeTab==='hero'||activeTab==='status')drawHero(document.getElementById('hero-canvas'),state.stats,state.hero.equipped);
+  if(activeTab==='hero'||activeTab==='status')drawHero(document.getElementById('hero-canvas'),activeStats(),activeEquipment());
   if(activeTab==='shop'||activeTab==='hero'){
     document.querySelectorAll('canvas[data-item]').forEach(canvas=>drawItemIcon(canvas,HERO_INDEX[canvas.dataset.item]));
   }
@@ -1288,14 +1403,14 @@ function ringMarkup(stat,key){
   return `<div class="ring-wrap" role="img" aria-label="${key} level ${stat.level}, ${stat.quarters} out of 4"><svg class="ring" viewBox="0 0 100 100" aria-hidden="true">${path}</svg><div class="ring-center"><span class="glyph-disc">${statGlyph(key)}</span></div></div>`;
 }
 function statusCard(key){
-  const stat=state.stats[key],done=completed(key),def=STATS[key];
-  return `<article class="stat-card" data-stat="${key}">${ringMarkup(stat,key)}<div class="stat-meta"><div class="stat-label">${def.name}</div><div class="stat-level">LEVEL <strong>${stat.level}</strong></div><div class="quarter-count">${stat.quarters} / 4</div><div class="stat-actions">${done?`<span class="stat-completed">✓ DONE</span><button class="undo-link" data-action="undo-stat" data-id="${key}">UNDO</button>`:`<button class="action-btn" data-action="log-stat" data-id="${key}">+ ${def.action.toUpperCase()}</button>`}</div></div></article>`;
+  const stat=activeStats()[key],done=completed(key),def=STATS[key];
+  return `<article class="stat-card" data-stat="${key}">${ringMarkup(stat,key)}<div class="stat-meta"><div class="stat-label">${def.name}</div><div class="stat-level">LEVEL <strong>${stat.level}</strong></div><div class="quarter-count">${stat.quarters} / 4</div><div class="stat-actions">${devMode?`<button class="action-btn" data-action="dev-step" data-id="${key}" data-delta="1">+¼</button><button class="undo-link" data-action="dev-step" data-id="${key}" data-delta="-1">−¼</button>`:done?`<span class="stat-completed">✓ DONE</span><button class="undo-link" data-action="undo-stat" data-id="${key}">UNDO</button>`:`<button class="action-btn" data-action="log-stat" data-id="${key}">+ ${def.action.toUpperCase()}</button>`}</div></div></article>`;
 }
 function heroStage(compact=false){
-  const eq=state.hero.equipped;
+  const eq=activeEquipment(),stats=activeStats();
   const pet=HERO_INDEX[eq.companion];
-  return `<section class="hero-stage ${compact?'compact':''}"><div class="hero-canvas-frame"><div class="stage-upper"><span>CHARACTER // 001</span><span class="stage-live">● ACTIVE</span></div><canvas id="hero-canvas" width="240" height="320" aria-label="Human-proportioned pixel art hero with dark center-parted hair and glasses. Health affects muscle definition, Stamina affects energy, and Focus affects magical effects. Equipment appears on his body."></canvas><div class="stage-bottom"><span>${eq.weapon?escapeHtml(HERO_INDEX[eq.weapon].name):'UNARMED'}</span><span>${pet?escapeHtml(pet.name):'SOLO'}</span></div></div>
-  <div class="stage-attributes"><span>♥ ${state.stats.health.level}</span><span>ϟ ${state.stats.stamina.level}</span><span>◉ ${state.stats.focus.level}</span></div></section>`;
+  return `<section class="hero-stage ${compact?'compact':''}"><div class="hero-canvas-frame"><div class="stage-upper"><span>CHARACTER // 001</span><span class="stage-live">● ACTIVE</span></div>${devMode?'<span class="hero-dev-tag">DEV PREVIEW</span>':''}<canvas id="hero-canvas" width="240" height="320" aria-label="Human-proportioned pixel art hero with dark center-parted hair and glasses. Health affects muscle definition, Stamina affects energy, and Focus affects concentration. Equipped items are held and worn, with one companion beside the hero."></canvas><div class="stage-bottom"><span>${eq.weapon?escapeHtml(HERO_INDEX[eq.weapon].name):'UNARMED'}</span><span>${pet?escapeHtml(pet.name):'SOLO'}</span></div></div>
+  <div class="stage-attributes"><span>♥ ${stats.health.level}</span><span>ϟ ${stats.stamina.level}</span><span>◉ ${stats.focus.level}</span></div></section>`;
 }
 function renderActivity(){
   if(!state.activity.length)return '';
@@ -1312,24 +1427,25 @@ function renderMissions(){
   }).join(''):'<div class="empty-state">NO MISSIONS</div>'}</section>`;
 }
 function slotCard(type){
-  const id=state.hero.equipped[type],item=HERO_INDEX[id];
+  const id=activeEquipment()[type],item=HERO_INDEX[id];
   return `<div class="equip-slot"><div class="slot-label">${type.toUpperCase()}</div><div class="slot-content">${item?`<canvas data-item="${id}" width="88" height="88" aria-hidden="true"></canvas>`:'<span class="empty-slot-icon">◇</span>'}<div class="slot-text"><strong>${item?escapeHtml(item.name):'NONE'}</strong>${item?`<small class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name}</small>`:''}</div></div>${item?`<button class="action-btn secondary" data-action="unequip" data-id="${type}">UNEQUIP</button>`:''}</div>`;
 }
 function inventoryCard(id){
-  const item=HERO_INDEX[id],equipped=state.hero.equipped[item.type]===id;
+  const item=HERO_INDEX[id],equipped=activeEquipment()[item.type]===id;
   return `<button class="inventory-card ${equipped?'equipped':''}" data-action="toggle-equip" data-id="${id}"><canvas data-item="${id}" width="88" height="88" aria-hidden="true"></canvas><span><strong>${escapeHtml(item.name)}</strong><small class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name} · ${item.type}</small></span><em>${equipped?'EQUIPPED':'EQUIP'}</em></button>`;
 }
 function renderHero(){
-  return `<p class="eyebrow">CHARACTER // EQUIPMENT</p><h1 class="page-title">HERO.</h1>${heroStage()}<div class="section-heading"><h2>EQUIPPED</h2></div><div class="equip-grid">${HERO_SLOTS.map(slotCard).join('')}</div><div class="section-heading"><h2>INVENTORY</h2><span class="section-aside">${state.hero.owned.length} ITEMS</span></div><div class="hero-inventory">${state.hero.owned.length?state.hero.owned.map(inventoryCard).join(''):'<div class="empty-state">EMPTY INVENTORY</div>'}</div>`;
+  return `<p class="eyebrow">CHARACTER // EQUIPMENT</p><h1 class="page-title">HERO.</h1>${devMode?'<div class="dev-banner">DEV PREVIEW ACTIVE · Try every item free in the Store. Your real equipment is unchanged.</div>':''}${heroStage()}<div class="section-heading"><h2>EQUIPPED</h2></div><div class="equip-grid">${HERO_SLOTS.map(slotCard).join('')}</div><div class="section-heading"><h2>INVENTORY</h2><span class="section-aside">${state.hero.owned.length} ITEMS</span></div><div class="hero-inventory">${state.hero.owned.length?state.hero.owned.map(inventoryCard).join(''):'<div class="empty-state">EMPTY INVENTORY</div>'}</div>`;
 }
 function catalogCard(item){
-  const owned=state.hero.owned.includes(item.id),equipped=state.hero.equipped[item.type]===item.id;
-  const disabled=!owned&&state.wallet<item.cost;
+  const owned=state.hero.owned.includes(item.id),equipped=activeEquipment()[item.type]===item.id;
+  const disabled=!devMode&&!owned&&state.wallet<item.cost;
   const label=item.baseKey==='handaxe'?'Handaxe · Thrown':item.group;
-  return `<article class="catalog-card rarity-${item.rarity}"><div class="catalog-art"><canvas data-item="${item.id}" width="88" height="88" aria-label="Pixel-art ${escapeHtml(item.baseName||item.shape)}"></canvas></div><div class="catalog-info"><div class="catalog-name">${escapeHtml(item.name)}</div><span class="catalog-type">${escapeHtml(label)}</span><span class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name.toUpperCase()}</span><div class="catalog-price">${amount(item.cost)}</div></div><button class="action-btn catalog-button ${owned?'secondary':''}" data-action="${owned?'toggle-equip':'buy-hero'}" data-id="${item.id}" ${disabled?'disabled':''}>${owned?(equipped?'UNEQUIP':'EQUIP'):'BUY'}</button></article>`;
+  return `<article class="catalog-card rarity-${item.rarity}"><div class="catalog-art"><canvas data-item="${item.id}" width="88" height="88" aria-label="Pixel-art ${escapeHtml(item.baseName||item.shape)}"></canvas></div><div class="catalog-info"><div class="catalog-name">${escapeHtml(item.name)}</div><span class="catalog-type">${escapeHtml(label)}</span><span class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name.toUpperCase()}</span><div class="catalog-price">${amount(item.cost)}</div></div><button class="action-btn catalog-button ${owned?'secondary':''}" data-action="${devMode?'dev-equip':owned?'toggle-equip':'buy-hero'}" data-id="${item.id}" ${disabled?'disabled':''}>${devMode?(equipped?'REMOVE':'TRY ON'):owned?(equipped?'UNEQUIP':'EQUIP'):'BUY'}</button></article>`;
 }
 function catalogResults(){
-  const results=HERO_ITEMS.filter(item=>item.type===storeFilter&&item.rarity===storeRarity&&
+  const available=devMode?[...HERO_ITEMS,...LEGACY_ITEMS.map(item=>({...item,group:'Legacy Gear'}))]:HERO_ITEMS;
+  const results=available.filter(item=>item.type===storeFilter&&item.rarity===storeRarity&&
     `${item.name} ${item.group} ${item.baseName||''} ${item.baseKey==='handaxe'?'throwing axe':''}`.toLowerCase().includes(storeQuery.trim().toLowerCase()));
   if(!results.length)return '<div class="empty-state">NO MATCHING GEAR</div>';
   const groups=[...new Set(results.map(item=>item.group))];
@@ -1337,18 +1453,31 @@ function catalogResults(){
 }
 function renderShop(){
   const filters=[['weapon','WEAPONS'],['armor','ARMOR'],['shield','SHIELDS'],['companion','PETS']];
-  return `<p class="eyebrow">HERO ARSENAL</p><h1 class="page-title">STORE.</h1><div class="store-balance"><span>YOUR FUNDS</span><strong>${amount(state.wallet)}</strong></div><div class="store-tabs">${filters.map(([key,label])=>`<button class="store-tab ${storeFilter===key?'active':''}" data-action="store-filter" data-value="${key}" aria-pressed="${storeFilter===key}">${label}</button>`).join('')}</div>
+  return `<p class="eyebrow">HERO ARSENAL</p><h1 class="page-title">STORE.</h1>${devMode?'<div class="dev-banner">TEST MODE · Every item can be tried on for free. No purchase or saved inventory change.</div>':''}<div class="store-balance"><span>YOUR FUNDS</span><strong>${amount(state.wallet)}</strong></div><div class="store-tabs">${filters.map(([key,label])=>`<button class="store-tab ${storeFilter===key?'active':''}" data-action="store-filter" data-value="${key}" aria-pressed="${storeFilter===key}">${label}</button>`).join('')}</div>
   <div class="rarity-tabs">${Object.keys(RARITIES).map(rarity=>`<button class="rarity-tab ${rarity} ${storeRarity===rarity?'selected':''}" data-action="store-rarity" data-value="${rarity}" aria-pressed="${storeRarity===rarity}">${RARITIES[rarity].name.toUpperCase()}</button>`).join('')}</div>
   <input id="store-search" class="store-search" type="search" placeholder="SEARCH EQUIPMENT" aria-label="Search equipment" value="${escapeHtml(storeQuery)}" maxlength="50" autocomplete="off">
   <div id="catalog-results">${catalogResults()}</div>`;
+}
+function renderDevPanel(){
+  if(!DEV_TOOLS_ENABLED)return '';
+  const stats=activeStats();
+  return `<section class="settings-panel"><h2>DEVELOPER TEST MODE</h2>
+    <p class="dev-hint">Temporary testing only. Preview any weapon, armor, shield or companion without buying it, and set levels or quarter meters to test character changes.</p>
+    <div class="dev-buttons"><button class="action-btn ${devMode?'danger':''}" data-action="dev-toggle" aria-pressed="${devMode}">${devMode?'TURN TEST MODE OFF':'TURN TEST MODE ON'}</button></div>
+    ${devMode?`<div class="dev-banner">ACTIVE · Your wallet, owned inventory and real levels are safe. Changes vanish when test mode is turned off or the page reloads.</div>
+      <div class="dev-stat-row-head"><span>ATTRIBUTE</span><span>LEVEL</span><span>¼ UNITS</span></div>
+      <div class="dev-grid">${Object.keys(STATS).map(key=>`<div class="dev-stat-row"><label for="dev-${key}">${STATS[key].name}</label><input id="dev-${key}" data-dev-level="${key}" type="number" inputmode="numeric" min="1" max="999" value="${stats[key].level}" aria-label="${STATS[key].name} preview level"><input data-dev-quarters="${key}" type="number" inputmode="numeric" min="0" max="3" value="${stats[key].quarters}" aria-label="${STATS[key].name} preview quarters"></div>`).join('')}</div>
+      <div class="dev-buttons"><button class="action-btn" data-action="dev-apply">APPLY LEVELS</button><button class="action-btn secondary" data-action="dev-reset">RESET PREVIEW</button><button class="action-btn secondary" data-tab="hero">VIEW HERO</button><button class="action-btn secondary" data-tab="shop">TRY GEAR</button></div>
+      <p class="dev-hint">On the Status page, use +¼ and −¼ to test leveling and the 0/4 → previous level 3/4 decay rule. Each category has one active item.</p>`:''}</section>`;
 }
 function renderSettings(){
   const themes=[['acid','NEON'],['sunset','VICE'],['ice','ICE'],['mono','MONO']];
   return `<p class="eyebrow">SYSTEM CONTROL</p><h1 class="page-title">SETTINGS.</h1>
     <section class="settings-panel"><h2>COLORS</h2><div class="theme-grid">${themes.map(([id,name])=>`<button class="theme-choice ${state.theme===id?'active':''}" data-action="set-theme" data-value="${id}" aria-pressed="${state.theme===id}"><span class="theme-swatch"></span><span>${name}</span></button>`).join('')}</div></section>
+    ${renderDevPanel()}
     <section class="settings-panel"><h2>BACKUPS</h2><div class="settings-buttons"><button class="action-btn" data-action="export">EXPORT</button><button class="action-btn secondary" data-action="import">IMPORT</button></div><p class="fine-print">Progress stays in your browser. Export before clearing Safari data or switching devices.</p></section>
     <section class="settings-panel"><h2>RESET</h2><button class="action-btn danger" data-action="reset">RESET HERO DATA</button></section>
-    <p class="fine-print">HERO VERSION 3.0 · Layered pixel-art hero · D&D equipment types · Unofficial fan project.</p>`;
+    <p class="fine-print">HERO VERSION 4.0 · Layered pixel-art hero · D&D equipment types · Unofficial fan project.</p>`;
 }
 
 function openEditor(){
@@ -1357,6 +1486,7 @@ function openEditor(){
 }
 function changeStat(key,undo=false){
   if(!STATS[key])return;
+  if(devMode){adjustDevStat(key,undo?-1:1);return;}
   if(undo&&!confirm('Undo today’s exercise?'))return;
   const before=state.stats[key].level;
   const changed=undo?undoExercise(state,key,activeDate):logExercise(state,key,activeDate);
@@ -1374,6 +1504,7 @@ function claimTask(id){
   save();render();showToast(`+${amount(task.cash)}`);
 }
 function buyItem(id){
+  if(devMode){toggleEquip(id);return;}
   const item=HERO_INDEX[id];
   if(!item||state.hero.owned.includes(id)||state.wallet<item.cost)return;
   if(!confirm(`Buy ${item.name} for ${amount(item.cost)}?`))return;
@@ -1383,8 +1514,39 @@ function buyItem(id){
   save();render();showToast(`${item.name.toUpperCase()} EQUIPPED`);
 }
 function toggleEquip(id){
+  if(devMode){
+    const item=HERO_INDEX[id];if(!item||!devPreview)return;
+    devPreview.equipped[item.type]=devPreview.equipped[item.type]===id?null:id;
+    render();showToast(devPreview.equipped[item.type]===id?'TEST ITEM EQUIPPED':'TEST ITEM REMOVED');
+    return;
+  }
   if(!toggleHeroEquip(state.hero,id))return;
   save();render();showToast(state.hero.equipped[HERO_INDEX[id].type]===id?'EQUIPPED':'UNEQUIPPED');
+}
+function toggleDevMode(){
+  if(!DEV_TOOLS_ENABLED)return;
+  if(devMode){devMode=false;devPreview=null;}
+  else{devPreview=freshDevPreview();devMode=true;}
+  render();showToast(devMode?'TEST MODE ON · SAVED DATA SAFE':'TEST MODE OFF');
+}
+function adjustDevStat(key,delta){
+  if(!DEV_TOOLS_ENABLED||!devMode||!devPreview||!STATS[key])return;
+  devPreview.stats[key]=advanceStat(devPreview.stats[key],delta);
+  render();showToast(`${STATS[key].name.toUpperCase()} TEST: LV ${devPreview.stats[key].level} · ${devPreview.stats[key].quarters}/4`);
+}
+function applyDevStats(){
+  if(!DEV_TOOLS_ENABLED||!devMode||!devPreview)return;
+  const next={};
+  for(const key of Object.keys(STATS)){
+    const levelText=document.querySelector(`[data-dev-level="${key}"]`)?.value;
+    const quarterText=document.querySelector(`[data-dev-quarters="${key}"]`)?.value;
+    const level=Number(levelText),quarters=Number(quarterText);
+    if(!levelText||!quarterText||!Number.isInteger(level)||!Number.isInteger(quarters)||level<1||level>999||quarters<0||quarters>3){
+      showToast('ENTER LEVEL 1–999 AND QUARTERS 0–3');return;
+    }
+    next[key]={level,quarters};
+  }
+  devPreview.stats=next;render();showToast('TEST ATTRIBUTES APPLIED');
 }
 function exportBackup(){
   const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
@@ -1405,8 +1567,13 @@ document.addEventListener('click',event=>{
     case 'undo-stat':changeStat(id,true);break;
     case 'claim-task':claimTask(id);break;
     case 'buy-hero':buyItem(id);break;
+    case 'dev-equip':if(DEV_TOOLS_ENABLED&&devMode)toggleEquip(id);break;
     case 'toggle-equip':toggleEquip(id);break;
-    case 'unequip':if(unequipHeroSlot(state.hero,id)){save();render();showToast('UNEQUIPPED');}break;
+    case 'unequip':if(devMode){if(DEV_TOOLS_ENABLED&&devPreview&&unequipHeroSlot({equipped:devPreview.equipped},id)){render();showToast('TEST ITEM REMOVED');}}else if(unequipHeroSlot(state.hero,id)){save();render();showToast('UNEQUIPPED');}break;
+    case 'dev-toggle':toggleDevMode();break;
+    case 'dev-apply':applyDevStats();break;
+    case 'dev-step':adjustDevStat(id,Number(button.dataset.delta)>0?1:-1);break;
+    case 'dev-reset':if(DEV_TOOLS_ENABLED&&devMode){devPreview=freshDevPreview();render();showToast('PREVIEW RESET');}break;
     case 'store-filter':storeFilter=value;render();break;
     case 'store-rarity':storeRarity=value;render();break;
     case 'set-theme':state.theme=value;save();render();break;
@@ -1414,7 +1581,7 @@ document.addEventListener('click',event=>{
     case 'close-modal':dialog.close();break;
     case 'export':exportBackup();break;
     case 'import':importFile.click();break;
-    case 'reset':if(confirm('Reset hero stats, missions, funds and equipment? Your original home version is unaffected.')){state=initialState(activeDate);save();render();showToast('HERO RESET');}break;
+    case 'reset':if(confirm('Reset hero stats, missions, funds and equipment? Your original home version is unaffected.')){state=initialState(activeDate);devMode=false;devPreview=null;save();render();showToast('HERO RESET');}break;
   }
 });
 document.addEventListener('input',event=>{
@@ -1440,7 +1607,7 @@ importFile.addEventListener('change',async()=>{
     const raw=JSON.parse(await file.text());
     if(![1,2,3].includes(raw?.version)||!raw.stats?.health||!raw.stats?.stamina||!raw.stats?.focus)throw new Error('Invalid backup');
     if(!confirm('Replace this hero profile with your backup?'))return;
-    state=hydrate(raw,activeDate);syncDay();save();render();showToast('BACKUP RESTORED');
+    state=hydrate(raw,activeDate);devMode=false;devPreview=null;syncDay();save();render();showToast('BACKUP RESTORED');
   }catch{alert('Invalid Lifestyle Tracker backup. Your data was not changed.');}
   finally{importFile.value='';}
 });
