@@ -1,1 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080e12">
+  <meta name="description" content="Your daily missions. Your real-world progression. Track Health, Stamina, Focus, tasks and rewards.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lifestyle">
+  <title>Lifestyle / Player Progression</title>
+  <style>
+/* Theme tokens are deliberately independent from layout and tracking logic. */
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  -webkit-tap-highlight-color: transparent;
+  --bg: #080e12;
+  --panel: #111a1e;
+  --panel-raised: #182328;
+  --line: #29383b;
+  --text: #f4f7f1;
+  --muted: #95a4a7;
+  --accent: #c8fa64;
+  --accent-dark: #86a943;
+  --accent-glow: rgba(200, 250, 100, .18);
+  --danger: #ef8278;
+  --ring-off: #334348;
+}
 
+body[data-theme="sunset"] { --accent: #ff8e91; --accent-dark: #b95f76; --accent-glow: rgba(255,142,145,.18); --bg: #130d18; --panel: #221825; --panel-raised: #302031; --line: #483043; --ring-off: #54394d; }
+body[data-theme="ice"] { --accent: #64e7f2; --accent-dark: #419da5; --accent-glow: rgba(100,231,242,.17); --bg: #07151d; --panel: #10242e; --panel-raised: #173340; --line: #2c4b56; --ring-off: #32535e; }
+body[data-theme="mono"] { --accent: #f0f2e9; --accent-dark: #9ea49e; --accent-glow: rgba(240,242,233,.12); --bg: #0a0c0d; --panel: #191d1f; --panel-raised: #252b2e; --line: #3d4548; --ring-off: #435054; }
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; color: var(--text); background: var(--bg); min-height: 100dvh; font-size: 16px; }
+body::before { content:""; pointer-events:none; position:fixed; inset:0; z-index:0; opacity:.75; background: radial-gradient(ellipse at 12% 3%,var(--accent-glow),transparent 40%), radial-gradient(ellipse at 90% 70%,rgba(75,100,116,.11),transparent 52%); }
+button,input,select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+button { touch-action: manipulation; }
+.app-shell { position:relative; display:flex; flex-direction:column; min-height:100dvh; max-width:1100px; margin:auto; }
+.topbar { z-index:2; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:calc(env(safe-area-inset-top,0px) + 19px) 20px 18px; border-bottom:1px solid var(--line); background:color-mix(in srgb,var(--bg) 92%,transparent); }
+.brand { display:flex; align-items:center; gap:11px; min-width:0; }
+.brand-emblem { width:45px; height:45px; flex-shrink:0; border:2px solid var(--accent); color:var(--accent); display:flex; justify-content:center; align-items:center; font-size:20px; font-weight:950; letter-spacing:-3px; transform:skew(-6deg); }
+.emblem-dot { color:var(--text); }
+.brand-text { display:flex; flex-direction:column; gap:2px; }
+.brand-text strong { font-weight:900; letter-spacing:.075em; font-size:16px; }
+.brand-text small { font-size:10px; letter-spacing:.15em; color:var(--muted); font-weight:700; }
+.wallet-pill { display:flex; align-items:center; gap:9px; border:1px solid var(--line); border-radius:3px; padding:9px 12px; background:var(--panel); white-space:nowrap; font-weight:900; font-size:17px; font-variant-numeric:tabular-nums; }
+.wallet-icon { color:var(--accent); font-size:19px; }
+.screen { width:100%; flex:1; padding:26px 18px 130px; outline:none; }
+.eyebrow { margin:0 0 9px; font-size:12px; font-weight:900; letter-spacing:.17em; color:var(--accent); text-transform:uppercase; }
+.page-title { margin:0; font-size:clamp(33px,7.8vw,66px); line-height:.97; font-weight:950; letter-spacing:-.055em; text-transform:uppercase; }
+.page-title .outline { color:transparent; -webkit-text-stroke:1px var(--muted); }
+.page-subtitle { margin:13px 0 0; color:var(--muted); line-height:1.55; max-width:640px; }
+.section-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:29px 0 15px; }
+.section-heading h2 { font-size:14px; letter-spacing:.12em; margin:0; font-weight:900; text-transform:uppercase; }
+.section-heading .section-aside { font-size:12px; color:var(--muted); font-weight:700; text-align:right; }
+.mission-banner { overflow:hidden; margin-top:24px; border:1px solid var(--line); background:linear-gradient(120deg,var(--panel-raised),var(--panel)); border-radius:7px; padding:20px; position:relative; }
+.mission-banner::after { content:""; position:absolute; width:175px; height:175px; top:-100px; right:-55px; border:26px solid var(--accent-glow); border-radius:50%; }
+.banner-label { font-size:11px; letter-spacing:.16em; color:var(--muted); font-weight:900; }
+.banner-title { font-size:23px; font-weight:900; letter-spacing:-.035em; margin:8px 0 5px; }
+.banner-copy { max-width:380px; color:var(--muted); line-height:1.45; font-size:14px; position:relative; z-index:1; }
+.progress-track { height:5px; background:var(--line); margin-top:18px; border-radius:10px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--accent); transition:width .25s ease; }
+.stat-list { display:grid; gap:12px; }
+.stat-card { display:grid; grid-template-columns:110px minmax(0,1fr); gap:15px; align-items:center; border:1px solid var(--line); background:var(--panel); border-radius:8px; padding:17px 16px; position:relative; overflow:hidden; }
+.stat-card::before { content:""; position:absolute; top:0; left:0; height:100%; width:3px; background:var(--accent); opacity:.65; }
+.ring-wrap { position:relative; width:110px; aspect-ratio:1; display:grid; place-items:center; }
+.ring { width:100%; height:100%; overflow:visible; filter:drop-shadow(0 0 7px var(--accent-glow)); }
+.ring circle.track { fill:none; stroke:var(--ring-off); stroke-width:8; }
+.ring circle.segment { fill:none; stroke:var(--accent); stroke-width:8; stroke-linecap:round; }
+.ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; }
+.ring-center .lv { color:var(--muted); font-size:10px; letter-spacing:.15em; font-weight:900; }
+.ring-center .num { font-size:37px; letter-spacing:-.09em; font-weight:950; margin:4px 5px 0 0; font-variant-numeric:tabular-nums; }
+.stat-meta { min-width:0; }
+.stat-label { font-weight:950; font-size:21px; letter-spacing:-.045em; text-transform:uppercase; }
+.stat-hint { margin:5px 0 7px; color:var(--muted); font-size:12px; line-height:1.35; }
+.quarter-count { font-size:12px; font-weight:900; letter-spacing:.07em; color:var(--accent); }
+.stat-actions { margin-top:12px; display:flex; align-items:center; gap:9px; }
+.action-btn { border:0; background:var(--accent); color:#0b1213; border-radius:4px; font-size:13px; font-weight:950; padding:12px 15px; min-height:43px; line-height:1.1; transition:transform .13s,filter .13s; }
+.action-btn:active { transform:scale(.98); }
+.action-btn:hover:not(:disabled) { filter:brightness(1.07); }
+.action-btn:disabled { background:var(--panel-raised); color:var(--muted); border:1px solid var(--line); }
+.action-btn.secondary { background:transparent; color:var(--text); border:1px solid var(--line); }
+.action-btn.ghost { color:var(--muted); background:transparent; border:1px solid var(--line); }
+.action-btn.danger { background:var(--danger); color:#170d0d; }
+.undo-link { background:none; border:none; color:var(--muted); text-decoration:underline; font-size:12px; padding:8px 0; }
+.stat-completed { color:var(--accent); font-weight:900; font-size:12px; letter-spacing:.04em; }
+.note-panel { border:1px dashed var(--line); background:rgba(255,255,255,.015); border-radius:6px; padding:16px; line-height:1.55; font-size:13px; color:var(--muted); }
+.note-panel strong { color:var(--text); }
+.activity-list { display:flex; flex-direction:column; gap:0; }
+.activity-item { display:flex; align-items:center; gap:13px; padding:14px 0; border-bottom:1px solid var(--line); }
+.activity-symbol { display:grid; place-items:center; width:34px; height:34px; flex:0 0 34px; border:1px solid var(--line); background:var(--panel); color:var(--accent); font-size:19px; border-radius:3px; }
+.activity-detail { flex:1; min-width:0; }
+.activity-detail strong { font-size:14px; }
+.activity-detail small { display:block; color:var(--muted); margin-top:4px; font-size:12px; }
+.activity-change { color:var(--accent); font-size:13px; font-weight:900; white-space:nowrap; }
+.activity-change.negative { color:var(--danger); }
+.headline-row { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; }
+.big-value { color:var(--accent); font-size:clamp(34px,8vw,55px); font-weight:950; letter-spacing:-.055em; font-variant-numeric:tabular-nums; }
+.money-card { background:linear-gradient(120deg,var(--panel-raised),var(--panel)); border:1px solid var(--line); padding:22px; border-radius:7px; margin:25px 0; }
+.money-card .eyebrow { margin-bottom:6px; }
+.money-meta { color:var(--muted); font-size:13px; margin-top:5px; }
+.task-list, .reward-list { display:grid; gap:10px; }
+.task-card, .reward-card { border:1px solid var(--line); background:var(--panel); display:flex; align-items:center; gap:12px; padding:15px; border-radius:7px; min-height:78px; }
+.task-checkbox { flex:0 0 34px; width:34px; height:34px; display:grid; place-items:center; border:2px solid var(--ring-off); border-radius:5px; color:var(--accent); font-size:19px; }
+.task-card.complete .task-checkbox { border-color:var(--accent); background:var(--accent-glow); }
+.task-title, .reward-title { font-weight:750; font-size:15px; line-height:1.3; overflow-wrap:anywhere; }
+.task-card.complete .task-title { text-decoration:line-through; color:var(--muted); }
+.task-description, .reward-description { color:var(--muted); font-size:12px; font-weight:700; margin-top:5px; }
+.task-copy, .reward-copy { min-width:0; flex:1; }
+.task-action { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.cash-gain { font-weight:900; color:var(--accent); font-size:14px; white-space:nowrap; }
+.claim-button { border:1px solid var(--accent); color:var(--accent); background:transparent; border-radius:4px; padding:8px 10px; min-height:35px; font-size:12px; font-weight:900; white-space:nowrap; }
+.claimed-label { font-size:12px; font-weight:800; color:var(--muted); }
+.small-icon-button { border:0; color:var(--muted); background:transparent; font-size:19px; padding:5px; line-height:1; min-width:28px; }
+.reward-emoji { width:45px; height:45px; flex:0 0 45px; background:var(--panel-raised); display:grid; place-items:center; border:1px solid var(--line); color:var(--accent); font-size:23px; border-radius:5px; }
+.reward-card .action-btn { white-space:nowrap; padding:11px 12px; }
+.empty-state { border:1px dashed var(--line); text-align:center; padding:38px 24px; color:var(--muted); border-radius:6px; line-height:1.5; }
+.empty-state strong { display:block; font-size:18px; color:var(--text); margin-bottom:6px; }
+.inline-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.settings-panel { border:1px solid var(--line); background:var(--panel); border-radius:7px; padding:20px; margin-top:16px; }
+.settings-panel h2 { font-size:16px; margin:0 0 5px; font-weight:900; }
+.settings-panel p { color:var(--muted); line-height:1.55; margin:5px 0 17px; font-size:14px; }
+.theme-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.theme-choice { background:var(--panel-raised); border:1px solid var(--line); padding:10px 5px; border-radius:5px; color:var(--text); display:flex; flex-direction:column; align-items:center; gap:8px; font-size:11px; font-weight:800; }
+.theme-choice.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.theme-swatch { width:34px; height:34px; border-radius:50%; border:4px solid #263038; background:#c8fa64; }
+.theme-choice[data-value="sunset"] .theme-swatch { background:#ff8e91; border-color:#442938; }
+.theme-choice[data-value="ice"] .theme-swatch { background:#64e7f2; border-color:#214450; }
+.theme-choice[data-value="mono"] .theme-swatch { background:#f0f2e9; border-color:#3b4245; }
+.settings-buttons { display:flex; gap:9px; flex-wrap:wrap; }
+.settings-buttons .action-btn { flex:1; }
+.fine-print { font-size:12px; color:var(--muted); line-height:1.5; }
+.rule-list { margin:10px 0 0; padding-left:22px; color:var(--muted); font-size:13px; line-height:1.9; }
+.rule-list strong { color:var(--text); }
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; z-index:5; display:flex; align-items:stretch; justify-content:center; height:calc(77px + env(safe-area-inset-bottom,0px)); padding-bottom:env(safe-area-inset-bottom,0px); background:color-mix(in srgb,var(--bg) 96%,transparent); border-top:1px solid var(--line); backdrop-filter:blur(18px); }
+.nav-item { flex:1; max-width:200px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px; border:0; color:var(--muted); background:transparent; font-size:10px; font-weight:900; letter-spacing:.09em; position:relative; }
+.nav-item.active { color:var(--accent); }
+.nav-item.active::before { content:""; position:absolute; top:0; left:28%; right:28%; height:3px; background:var(--accent); }
+.nav-item svg { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; width:22px; height:22px; }
+.editor-dialog { border:1px solid var(--line); background:var(--panel-raised); color:var(--text); width:min(92vw,450px); border-radius:9px; padding:25px; box-shadow:0 25px 100px rgba(0,0,0,.65); }
+.editor-dialog::backdrop { background:rgba(1,6,8,.8); backdrop-filter:blur(6px); }
+.editor-dialog h2 { margin:0 0 10px; font-size:22px; }
+.editor-dialog p { margin:0 0 20px; color:var(--muted); font-size:14px; line-height:1.5; }
+.field { margin:15px 0; }
+.field label { display:block; font-size:13px; color:var(--muted); font-weight:800; margin-bottom:7px; }
+.field input { display:block; width:100%; min-height:49px; border:1px solid var(--line); border-radius:4px; background:var(--bg); padding:12px 13px; color:var(--text); font-size:16px; }
+.dialog-actions { display:flex; justify-content:flex-end; gap:9px; margin-top:24px; }
+.toast { display:none; position:fixed; bottom:calc(90px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100vw - 36px); background:var(--accent); color:#0a1413; border-radius:5px; z-index:10; padding:13px 17px; box-shadow:0 10px 30px rgba(0,0,0,.35); font-weight:900; font-size:13px; text-align:center; }
+.toast.visible { display:block; }
+@media (min-width:700px) { .topbar { padding:22px 32px; } .screen { padding:40px 32px 140px; } .stat-list { grid-template-columns:repeat(3,minmax(0,1fr)); } .stat-card { grid-template-columns:1fr; justify-items:center; text-align:center; padding:22px 10px; } .stat-label { font-size:22px; } .stat-actions { justify-content:center; } .ring-wrap { width:130px; } .page-subtitle { font-size:18px; } .task-list,.reward-list { grid-template-columns:repeat(2,minmax(0,1fr)); } .bottom-nav { left:50%; transform:translateX(-50%); width:min(600px,100%); border-left:1px solid var(--line); border-right:1px solid var(--line); border-radius:12px 12px 0 0; } }
+@media (max-width:360px) { .stat-card { grid-template-columns:89px 1fr; padding:14px 10px; gap:10px; } .ring-wrap { width:88px; } .stat-label { font-size:18px; } .stat-actions .action-btn { font-size:11px; padding:10px 9px; } .screen { padding:22px 13px 125px; } .wallet-pill { padding:8px; } .brand-text strong { font-size:14px; } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
+
+  </style>
+</head>
+<body data-theme="acid">
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Lifestyle Tracker">
+        <span class="brand-emblem">LT<span class="emblem-dot">.</span></span>
+        <span class="brand-text"><strong>LIFESTYLE</strong><small>TRACKER // 01</small></span>
+      </div>
+      <div class="wallet-pill" title="Virtual cash earned from tasks">
+        <span class="wallet-icon">$</span>
+        <span id="wallet-top">0</span>
+      </div>
+    </header>
+
+    <main id="screen" class="screen" tabindex="-1"></main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <button class="nav-item active" type="button" data-tab="status" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 5v7l5 3"/></svg><span>STATUS</span>
+      </button>
+      <button class="nav-item" type="button" data-tab="missions">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>MISSIONS</span>
+      </button>
+      <button class="nav-item" type="button" data-tab="shop">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg><span>REWARDS</span>
+      </button>
+      <button class="nav-item" type="button" data-tab="settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span>SETTINGS</span>
+      </button>
+    </nav>
+  </div>
+  <dialog id="editor-dialog" class="editor-dialog" aria-labelledby="dialog-title"></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <input type="file" id="import-file" accept="application/json,.json" hidden>
+  <script type="module">
+// Lifestyle Tracker's rules live here, independent of its appearance.
+// A quarter is one step, regardless of the current level.
+
+const STATS = {
+  health: { name: 'Health', short: 'HEALTH', action: 'Workout', hint: 'Strength or general workout', symbol: '✚' },
+  stamina: { name: 'Stamina', short: 'STAMINA', action: 'Cardio session', hint: 'Cardio or endurance training', symbol: '↗' },
+  focus: { name: 'Focus', short: 'FOCUS', action: 'Focus session', hint: 'Distraction-free work or practice', symbol: '◎' },
+};
+
+function dateKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function shiftDate(key, days) {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key || '');
+  if (!parts) return null;
+  const shifted = new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]) + days, 12);
+  return dateKey(shifted);
+}
+
+function advanceStat(stat, amount) {
+  let level = Math.max(1, Math.floor(Number(stat.level) || 1));
+  let quarters = Math.max(0, Math.min(3, Math.floor(Number(stat.quarters) || 0)));
+  if (amount > 0) {
+    quarters += 1;
+    if (quarters === 4) { level += 1; quarters = 0; }
+  } else if (amount < 0) {
+    if (quarters > 0) quarters -= 1;
+    else if (level > 1) { level -= 1; quarters = 3; }
+  }
+  return { level, quarters };
+}
+
+function initialState(today = dateKey()) {
+  return {
+    version: 1,
+    createdAt: today,
+    lastSettledDate: shiftDate(today, -1),
+    stats: {
+      health: { level: 1, quarters: 0 },
+      stamina: { level: 1, quarters: 0 },
+      focus: { level: 1, quarters: 0 },
+    },
+    dayLog: {},
+    tasks: [
+      { id: 'task-1', title: 'Make my bed', cash: 25, completedDates: [] },
+      { id: 'task-2', title: 'Read or study', cash: 75, completedDates: [] },
+      { id: 'task-3', title: 'Tidy my space', cash: 50, completedDates: [] },
+    ],
+    rewards: [
+      { id: 'reward-1', title: '30 minutes of guilt-free gaming', cost: 150 },
+      { id: 'reward-2', title: 'Movie night', cost: 300 },
+      { id: 'reward-3', title: 'Favorite treat', cost: 500 },
+    ],
+    wallet: 0,
+    transactions: [],
+    activity: [],
+    theme: 'acid',
+  };
+}
+
+function safeText(value, max = 80) {
+  return typeof value === 'string' ? value.trim().slice(0, max) : '';
+}
+
+function hydrate(input, today = dateKey()) {
+  const defaults = initialState(today);
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return defaults;
+  const state = { ...defaults };
+  const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && shiftDate(value, 0) === value;
+  state.createdAt = validDate(input.createdAt) ? input.createdAt : today;
+  state.lastSettledDate = validDate(input.lastSettledDate) ? input.lastSettledDate : shiftDate(today, -1);
+  // Prevent a backup with a future settlement date from stopping normal daily checks.
+  if (state.lastSettledDate >= today) state.lastSettledDate = shiftDate(today, -1);
+  for (const key of Object.keys(STATS)) {
+    const source = input.stats?.[key] || {};
+    state.stats[key] = {
+      level: Math.max(1, Math.min(999, Math.floor(Number(source.level) || 1))),
+      quarters: Math.max(0, Math.min(3, Math.floor(Number(source.quarters) || 0))),
+    };
+  }
+  state.dayLog = {};
+  if (input.dayLog && typeof input.dayLog === 'object') {
+    for (const [day, entry] of Object.entries(input.dayLog)) {
+      if (validDate(day) && entry && typeof entry === 'object') {
+        state.dayLog[day] = Object.fromEntries(Object.keys(STATS).map(k => [k, entry[k] === true]));
+      }
+    }
+  }
+  const cleanTasks = (Array.isArray(input.tasks) ? input.tasks : defaults.tasks).slice(0, 150).map((item, i) => ({
+    id: safeText(item?.id, 100) || `task-restored-${i}`,
+    title: safeText(item?.title) || 'Untitled task',
+    cash: Math.max(1, Math.min(10000, Math.floor(Number(item?.cash) || 25))),
+    completedDates: (Array.isArray(item?.completedDates) ? item.completedDates : []).filter(validDate).slice(-400),
+  }));
+  const cleanRewards = (Array.isArray(input.rewards) ? input.rewards : defaults.rewards).slice(0, 150).map((item, i) => ({
+    id: safeText(item?.id, 100) || `reward-restored-${i}`,
+    title: safeText(item?.title) || 'Untitled reward',
+    cost: Math.max(1, Math.min(1000000, Math.floor(Number(item?.cost) || 100))),
+  }));
+  state.tasks = cleanTasks;
+  state.rewards = cleanRewards;
+  state.wallet = Math.max(0, Math.min(100000000, Math.floor(Number(input.wallet) || 0)));
+  state.transactions = Array.isArray(input.transactions) ? input.transactions.slice(0, 200).filter(x => x && typeof x === 'object').map(x => ({
+    id: safeText(x.id, 100), title: safeText(x.title), amount: Math.max(-1000000, Math.min(1000000, Math.floor(Number(x.amount) || 0))), day: validDate(x.day) ? x.day : today,
+  })) : [];
+  state.activity = Array.isArray(input.activity) ? input.activity.slice(0, 250).filter(x => x && typeof x === 'object' && STATS[x.stat]).map(x => ({
+    stat: x.stat, day: validDate(x.day) ? x.day : today, change: Math.max(-1, Math.min(1, Number(x.change) || 0)), reason: safeText(x.reason, 30), level: Math.max(1, Math.floor(Number(x.level) || 1)), quarters: Math.max(0, Math.min(3, Math.floor(Number(x.quarters) || 0))),
+  })) : [];
+  state.theme = ['acid', 'sunset', 'ice', 'mono'].includes(input.theme) ? input.theme : 'acid';
+  return state;
+}
+
+function logExercise(state, statKey, today = dateKey()) {
+  if (!STATS[statKey]) return false;
+  const record = (state.dayLog[today] ||= {});
+  if (record[statKey]) return false;
+  const next = advanceStat(state.stats[statKey], 1);
+  state.stats[statKey] = next;
+  record[statKey] = true;
+  state.activity.unshift({ stat: statKey, day: today, change: 1, reason: 'completed', ...next });
+  state.activity.length = Math.min(250, state.activity.length);
+  return true;
+}
+
+function undoExercise(state, statKey, today = dateKey()) {
+  if (!STATS[statKey] || !state.dayLog[today]?.[statKey]) return false;
+  const next = advanceStat(state.stats[statKey], -1);
+  state.stats[statKey] = next;
+  state.dayLog[today][statKey] = false;
+  state.activity.unshift({ stat: statKey, day: today, change: -1, reason: 'correction', ...next });
+  state.activity.length = Math.min(250, state.activity.length);
+  return true;
+}
+
+function settleMissedDays(state, today = dateKey()) {
+  let cursor = shiftDate(state.lastSettledDate, 1);
+  if (!cursor) { state.lastSettledDate = shiftDate(today, -1); return 0; }
+  let missed = 0;
+  let iterations = 0;
+  // Applies every unprocessed calendar day, including when the app was closed.
+  while (cursor < today && iterations < 10000) {
+    for (const key of Object.keys(STATS)) {
+      if (state.dayLog[cursor]?.[key] !== true) {
+        const next = advanceStat(state.stats[key], -1);
+        state.stats[key] = next;
+        state.activity.unshift({ stat: key, day: cursor, change: -1, reason: 'missed', ...next });
+        missed++;
+      }
+    }
+    state.lastSettledDate = cursor;
+    cursor = shiftDate(cursor, 1);
+    iterations++;
+  }
+  state.activity.length = Math.min(250, state.activity.length);
+  // Old individual completion records can be discarded after they are settled.
+  for (const day of Object.keys(state.dayLog)) {
+    if (day < shiftDate(today, -180)) delete state.dayLog[day];
+  }
+  return missed;
+}
+
+
+const STORAGE_KEY = 'lifestyle-tracker:v1';
+const screen = document.getElementById('screen');
+const walletTop = document.getElementById('wallet-top');
+const dialog = document.getElementById('editor-dialog');
+const toastElement = document.getElementById('toast');
+const importFile = document.getElementById('import-file');
+const tabs = ['status', 'missions', 'shop', 'settings'];
+let activeTab = 'status';
+let activeDate = dateKey();
+let toastTimer;
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? hydrate(JSON.parse(raw), dateKey()) : initialState(dateKey());
+  } catch (error) {
+    alert('Saved data could not be opened. The tracker has started a new local session. If you have a backup, you can import it in Settings.');
+    return initialState(dateKey());
+  }
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch { showToast('Storage unavailable. Export a backup in Settings.'); }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
+}
+
+function amount(value) { return Math.floor(value).toLocaleString('en-US'); }
+function completed(statKey) { return state.dayLog[activeDate]?.[statKey] === true; }
+function formatDate(key, options = { month:'short', day:'numeric' }) {
+  const [y,m,d] = key.split('-').map(Number);
+  return new Intl.DateTimeFormat('en-US', options).format(new Date(y,m-1,d,12));
+}
+
+function showToast(message) {
+  toastElement.textContent = message;
+  toastElement.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastElement.classList.remove('visible'), 3500);
+}
+
+function syncDay() {
+  const now = dateKey();
+  if (now !== activeDate) activeDate = now;
+  const missed = settleMissedDays(state, now);
+  if (missed) { save(); showToast(`New day: ${missed} missed stat check${missed === 1 ? '' : 's'} applied`); }
+}
+
+function render() {
+  document.body.dataset.theme = state.theme;
+  walletTop.textContent = amount(state.wallet);
+  const pages = { status: renderStatus, missions: renderMissions, shop: renderShop, settings: renderSettings };
+  screen.innerHTML = pages[activeTab]();
+  document.querySelectorAll('[data-tab]').forEach(button => {
+    const isActive = button.dataset.tab === activeTab;
+    button.classList.toggle('active', isActive);
+    if (isActive) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  });
+}
+
+function ringMarkup(stat, label) {
+  const paths = Array.from({ length:4 }, (_, index) => {
+    const rotate = -90 + index * 90;
+    return `<circle class="track" cx="50" cy="50" r="42" stroke-dasharray="56 264" transform="rotate(${rotate} 50 50)" />${index < stat.quarters ? `<circle class="segment" cx="50" cy="50" r="42" stroke-dasharray="56 264" transform="rotate(${rotate} 50 50)" />` : ''}`;
+  }).join('');
+  return `<div class="ring-wrap" role="img" aria-label="${label}: level ${stat.level}, ${stat.quarters} out of 4 quarters complete">
+    <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">${paths}</svg>
+    <div class="ring-center" aria-hidden="true"><span class="lv">LEVEL</span><span class="num">${stat.level}</span></div>
+  </div>`;
+}
+
+function statusCard(key) {
+  const stat = state.stats[key];
+  const def = STATS[key];
+  const done = completed(key);
+  return `<article class="stat-card">
+    ${ringMarkup(stat, def.name)}
+    <div class="stat-meta">
+      <div class="stat-label">${def.name}</div>
+      <p class="stat-hint">${def.hint}</p>
+      <div class="quarter-count">${stat.quarters} / 4 QUARTERS</div>
+      <div class="stat-actions">
+        ${done ? `<span class="stat-completed">✓ LOGGED TODAY</span><button class="undo-link" data-action="undo-stat" data-id="${key}" aria-label="Undo today's ${def.name} exercise">Undo</button>` : `<button class="action-btn" data-action="log-stat" data-id="${key}">+ LOG ${def.action.toUpperCase()}</button>`}
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderActivity() {
+  if (!state.activity.length) return `<div class="empty-state"><strong>No activity yet</strong>Your first logged session will appear here.</div>`;
+  return `<div class="activity-list">${state.activity.slice(0, 6).map(item => {
+    const def = STATS[item.stat];
+    const title = item.reason === 'completed' ? `${def.name} session completed` : item.reason === 'correction' ? `${def.name} session corrected` : `${def.name} day missed`;
+    return `<div class="activity-item"><span class="activity-symbol">${def.symbol}</span><div class="activity-detail"><strong>${title}</strong><small>${formatDate(item.day)} · Now level ${item.level} (${item.quarters}/4)</small></div><span class="activity-change ${item.change < 0 ? 'negative' : ''}">${item.change > 0 ? '+¼' : '−¼'}</span></div>`;
+  }).join('')}</div>`;
+}
+
+function renderStatus() {
+  const completedCount = Object.keys(STATS).filter(completed).length;
+  return `<p class="eyebrow">PLAYER PROFILE // DAILY PROGRESSION</p>
+    <h1 class="page-title">BUILD YOUR<br><span class="outline">CHARACTER.</span></h1>
+    <p class="page-subtitle">Real-life effort. Game-style progression. Your next level is earned one day at a time.</p>
+    <section class="mission-banner" aria-label="Daily progress">
+      <div class="banner-label">DAILY CHECK-IN // ${formatDate(activeDate, { weekday:'short', month:'short', day:'numeric' }).toUpperCase()}</div>
+      <div class="banner-title">${completedCount} OF 3 ACTIVITIES LOGGED</div>
+      <div class="banner-copy">Complete one exercise for each stat today. Uncompleted stats lose one quarter after the day ends.</div>
+      <div class="progress-track" aria-hidden="true"><div class="progress-fill" style="width:${(completedCount / 3)*100}%"></div></div>
+    </section>
+    <div class="section-heading"><h2>Core attributes</h2><span class="section-aside">+¼ PER SESSION</span></div>
+    <section class="stat-list" aria-label="Stats">${Object.keys(STATS).map(statusCard).join('')}</section>
+    <div class="section-heading"><h2>Recent activity</h2><span class="section-aside">AUTO-SAVED</span></div>
+    ${renderActivity()}
+    <div class="section-heading"><h2>System rules</h2></div>
+    <div class="note-panel"><strong>Four quarters = one level.</strong> A logged exercise earns ¼ for its stat, once per day. Missing a day removes ¼. If a meter is empty, it immediately drops one level and becomes ¾ full at the lower level. The minimum level is 1. Planned rest days currently count as missed days.</div>`;
+}
+
+function renderMissions() {
+  const claimed = state.tasks.filter(task => task.completedDates.includes(activeDate)).length;
+  const potential = state.tasks.reduce((sum, task) => sum + task.cash, 0);
+  return `<p class="eyebrow">DAILY OPERATIONS // TASK BOARD</p>
+    <h1 class="page-title">YOUR<br><span class="outline">MISSIONS.</span></h1>
+    <p class="page-subtitle">Get things done. Earn virtual cash. Spend it on rewards that actually motivate you.</p>
+    <section class="money-card"><div class="eyebrow">TODAY'S POTENTIAL PAYOUT</div><div class="big-value">${amount(potential)}</div><div class="money-meta">${claimed} of ${state.tasks.length} daily tasks claimed · Resets each day</div></section>
+    <div class="section-heading"><h2>Active missions</h2><button class="action-btn" data-modal="task">+ NEW TASK</button></div>
+    <section class="task-list" aria-label="Daily tasks">${state.tasks.length ? state.tasks.map(task => {
+      const done = task.completedDates.includes(activeDate);
+      return `<article class="task-card ${done ? 'complete' : ''}">
+        <div class="task-checkbox" aria-hidden="true">${done ? '✓' : ''}</div>
+        <div class="task-copy"><div class="task-title">${escapeHtml(task.title)}</div><div class="task-description">DAILY MISSION</div></div>
+        <div class="task-action"><span class="cash-gain">+${amount(task.cash)}</span>${done ? '<span class="claimed-label">CLAIMED ✓</span>' : `<button class="claim-button" data-action="claim-task" data-id="${escapeHtml(task.id)}">CLAIM</button>`}<button class="small-icon-button" data-action="remove-task" data-id="${escapeHtml(task.id)}" aria-label="Remove ${escapeHtml(task.title)}">×</button></div>
+      </article>`;
+    }).join('') : '<div class="empty-state"><strong>No missions yet</strong>Create a daily task to start earning cash.</div>'}</section>
+    <div class="section-heading"><h2>How payouts work</h2></div>
+    <div class="note-panel">Each mission can pay out <strong>once per calendar day</strong>. Your cash balance carries over. Tasks don't automatically change Health, Stamina or Focus; log those exercises from the Status screen.</div>`;
+}
+
+function renderShop() {
+  return `<p class="eyebrow">PLAYER ECONOMY // REDEMPTION</p>
+    <h1 class="page-title">REWARD<br><span class="outline">YOURSELF.</span></h1>
+    <p class="page-subtitle">Set your own real-life rewards. The cash is virtual — the motivation is real.</p>
+    <section class="money-card"><div class="eyebrow">AVAILABLE BALANCE</div><div class="big-value">${amount(state.wallet)}</div><div class="money-meta">Earn cash by completing missions. You choose how to spend it.</div></section>
+    <div class="section-heading"><h2>Reward shop</h2><button class="action-btn" data-modal="reward">+ NEW REWARD</button></div>
+    <section class="reward-list" aria-label="Available rewards">${state.rewards.length ? state.rewards.map((reward, index) => `
+      <article class="reward-card"><div class="reward-emoji">${['★','✦','◆','◈'][index%4]}</div>
+      <div class="reward-copy"><div class="reward-title">${escapeHtml(reward.title)}</div><div class="reward-description">COST ${amount(reward.cost)}</div></div>
+      <div class="task-action"><button class="action-btn" data-action="redeem" data-id="${escapeHtml(reward.id)}" ${state.wallet < reward.cost ? 'disabled title="Earn more cash to unlock"' : ''}>REDEEM</button><button class="small-icon-button" data-action="remove-reward" data-id="${escapeHtml(reward.id)}" aria-label="Remove ${escapeHtml(reward.title)}">×</button></div>
+      </article>`).join('') : '<div class="empty-state"><strong>No rewards yet</strong>Create your first reward to start saving toward it.</div>'}</section>
+    <div class="section-heading"><h2>Transaction history</h2><span class="section-aside">LATEST 8</span></div>
+    ${state.transactions.length ? `<div class="activity-list">${state.transactions.slice(0,8).map(tx => `<div class="activity-item"><span class="activity-symbol">$</span><div class="activity-detail"><strong>${escapeHtml(tx.title)}</strong><small>${formatDate(tx.day)}</small></div><span class="activity-change ${tx.amount < 0 ? 'negative' : ''}">${tx.amount < 0 ? '−' : '+'}${amount(Math.abs(tx.amount))}</span></div>`).join('')}</div>` : '<div class="empty-state"><strong>Nothing spent or earned yet</strong>Your cash history will show up here.</div>'}
+    <div class="section-heading"><h2>A note on rewards</h2></div>
+    <div class="note-panel">Redeeming a reward deducts virtual cash and records the purchase. The app doesn't purchase anything or automatically grant real-world privileges.</div>`;
+}
+
+function renderSettings() {
+  const themes = [{ id:'acid', name:'Neon' },{ id:'sunset', name:'Vice' },{ id:'ice', name:'Ice' },{ id:'mono', name:'Mono' }];
+  return `<p class="eyebrow">SYSTEM CONTROL // CUSTOMIZATION</p>
+    <h1 class="page-title">YOUR<br><span class="outline">SETTINGS.</span></h1>
+    <p class="page-subtitle">Change the look instantly. Your stats, daily rules, and rewards keep working the same way.</p>
+    <section class="settings-panel"><h2>Visual themes</h2><p>Tap a colorway to change the entire interface.</p><div class="theme-grid">
+      ${themes.map(theme => `<button class="theme-choice ${theme.id === state.theme ? 'active' : ''}" data-action="set-theme" data-value="${theme.id}" aria-pressed="${theme.id === state.theme}"><span class="theme-swatch"></span><span>${theme.name}</span></button>`).join('')}
+    </div></section>
+    <section class="settings-panel"><h2>Save your progress</h2><p>Your data is stored only in this browser on this device. Back up regularly, especially before clearing Safari data or changing phones.</p><div class="settings-buttons"><button class="action-btn" data-action="export">EXPORT BACKUP</button><button class="action-btn secondary" data-action="import">IMPORT BACKUP</button></div></section>
+    <section class="settings-panel"><h2>Progression rules</h2><p>These rules are built into the tracking engine and don't change with the theme.</p><ul class="rule-list"><li>One Health, Stamina, and Focus session each per day</li><li>Completed session: <strong>+¼ meter</strong></li><li>Four quarters: <strong>level up, reset to 0/4</strong></li><li>Missed calendar day: <strong>−¼ meter</strong></li><li>At 0/4: <strong>level down, new meter at 3/4</strong></li><li>Level cannot fall below 1</li></ul></section>
+    <section class="settings-panel"><h2>Install on iPhone</h2><p>In Safari, open your published app, tap Share, then Add to Home Screen. Choose Open as Web App if prompted. The app can then launch from your Home Screen.</p><div class="fine-print">Version 1.0 · Original game-inspired interface. Not affiliated with Rockstar Games or Grand Theft Auto.</div></section>
+    <section class="settings-panel"><h2>Start over</h2><p>Deleting local data is permanent unless you have exported a backup.</p><button class="action-btn danger" data-action="reset">RESET ALL DATA</button></section>`;
+}
+
+function openEditor(kind) {
+  const task = kind === 'task';
+  dialog.innerHTML = `<form id="editor-form" data-kind="${kind}">
+    <h2 id="dialog-title">${task ? 'NEW DAILY MISSION' : 'NEW REWARD'}</h2>
+    <p>${task ? 'Create a task that earns virtual cash each day.' : 'Choose a treat or privilege that you can redeem with earned cash.'}</p>
+    <div class="field"><label for="item-name">${task ? 'Task name' : 'Reward name'}</label><input id="item-name" name="title" placeholder="${task ? 'e.g. Finish my readings' : 'e.g. Go out for coffee'}" maxlength="80" required></div>
+    <div class="field"><label for="item-value">${task ? 'Cash payout' : 'Reward cost'} ($)</label><input id="item-value" name="value" type="number" inputmode="numeric" min="1" max="10000" step="1" value="${task ? 50 : 250}" required></div>
+    <div class="dialog-actions"><button class="action-btn secondary" type="button" data-action="close-modal">CANCEL</button><button class="action-btn" type="submit">${task ? 'ADD MISSION' : 'ADD REWARD'}</button></div>
+  </form>`;
+  dialog.showModal();
+}
+
+function uniqueId(prefix) { return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`; }
+
+function changeStat(key, undo = false) {
+  if (!STATS[key]) return;
+  if (undo && !confirm(`Undo today's ${STATS[key].name} session? This will remove one quarter.`)) return;
+  const before = { ...state.stats[key] };
+  const changed = undo ? undoExercise(state, key, activeDate) : logExercise(state, key, activeDate);
+  if (!changed) return;
+  save(); render();
+  const after = state.stats[key];
+  if (undo) showToast(`${STATS[key].name} session undone`);
+  else if (after.level > before.level) showToast(`${STATS[key].name.toUpperCase()} LEVEL UP! Now level ${after.level}`);
+  else showToast(`${STATS[key].name} +¼ progress`);
+}
+
+function claimTask(id) {
+  const task = state.tasks.find(item => item.id === id);
+  if (!task || task.completedDates.includes(activeDate)) return;
+  task.completedDates.push(activeDate);
+  state.wallet += task.cash;
+  state.transactions.unshift({ id:uniqueId('tx'), title:task.title, amount:task.cash, day:activeDate });
+  state.transactions.length = Math.min(200, state.transactions.length);
+  save(); render(); showToast(`Mission complete: +${amount(task.cash)}`);
+}
+
+function redeem(id) {
+  const reward = state.rewards.find(item => item.id === id);
+  if (!reward || state.wallet < reward.cost) return;
+  if (!confirm(`Redeem “${reward.title}” for ${amount(reward.cost)} virtual cash?`)) return;
+  state.wallet -= reward.cost;
+  state.transactions.unshift({ id:uniqueId('tx'), title:`Redeemed: ${reward.title}`, amount:-reward.cost, day:activeDate });
+  state.transactions.length = Math.min(200, state.transactions.length);
+  save(); render(); showToast(`Redeemed: ${reward.title}`);
+}
+
+function exportBackup() {
+  const blob = new Blob([JSON.stringify({ ...state, exportedAt:new Date().toISOString() }, null, 2)], { type:'application/json' });
+  const href = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = href; a.download = `lifestyle-tracker-backup-${activeDate}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 2000);
+  showToast('Backup ready to save');
+}
+
+document.addEventListener('click', event => {
+  const tab = event.target.closest('[data-tab]');
+  if (tab && tabs.includes(tab.dataset.tab)) {
+    activeTab = tab.dataset.tab; render(); window.scrollTo({ top:0, behavior:'auto' }); return;
+  }
+  const opener = event.target.closest('[data-modal]');
+  if (opener) { openEditor(opener.dataset.modal); return; }
+  const button = event.target.closest('[data-action]');
+  if (!button) return;
+  const { action, id, value } = button.dataset;
+  switch (action) {
+    case 'log-stat': changeStat(id); break;
+    case 'undo-stat': changeStat(id, true); break;
+    case 'claim-task': claimTask(id); break;
+    case 'redeem': redeem(id); break;
+    case 'remove-task':
+      if (confirm('Remove this daily task? Previously earned cash will stay in your wallet.')) { state.tasks = state.tasks.filter(item => item.id !== id); save(); render(); }
+      break;
+    case 'remove-reward':
+      if (confirm('Remove this reward from your shop?')) { state.rewards = state.rewards.filter(item => item.id !== id); save(); render(); }
+      break;
+    case 'set-theme': state.theme = value; save(); render(); break;
+    case 'close-modal': dialog.close(); break;
+    case 'export': exportBackup(); break;
+    case 'import': importFile.click(); break;
+    case 'reset':
+      if (confirm('Reset ALL stats, tasks, rewards, and earned cash? This cannot be undone without a backup.')) {
+        state = initialState(activeDate); save(); render(); showToast('New character started');
+      }
+      break;
+  }
+});
+
+dialog.addEventListener('submit', event => {
+  event.preventDefault();
+  const form = event.target;
+  if (form.id !== 'editor-form') return;
+  const values = new FormData(form);
+  const title = String(values.get('title') || '').trim().slice(0,80);
+  const value = Math.floor(Number(values.get('value')));
+  if (!title || !Number.isInteger(value) || value < 1 || value > 10000) return;
+  if (form.dataset.kind === 'task') {
+    if (state.tasks.length >= 150) return showToast('Maximum 150 tasks reached');
+    state.tasks.push({ id:uniqueId('task'), title, cash:value, completedDates:[] });
+  } else {
+    if (state.rewards.length >= 150) return showToast('Maximum 150 rewards reached');
+    state.rewards.push({ id:uniqueId('reward'), title, cost:value });
+  }
+  dialog.close(); save(); render(); showToast(form.dataset.kind === 'task' ? 'Mission added' : 'Reward added');
+});
+
+dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+
+importFile.addEventListener('change', async () => {
+  const file = importFile.files?.[0];
+  if (!file) return;
+  try {
+    const raw = JSON.parse(await file.text());
+    if (raw?.version !== 1 || !raw.stats?.health || !raw.stats?.stamina || !raw.stats?.focus) throw new Error('Not a Lifestyle Tracker backup');
+    if (!confirm('Replace all current progress with this backup? Export your current data first if you want to keep it.')) return;
+    state = hydrate(raw, activeDate);
+    syncDay(); save(); render(); showToast('Backup restored successfully');
+  } catch { alert('This file is not a valid Lifestyle Tracker backup. Your current data was not changed.'); }
+  finally { importFile.value = ''; }
+});
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { syncDay(); render(); } });
+setInterval(() => { if (dateKey() !== activeDate) { syncDay(); render(); } }, 60_000);
+
+syncDay();
+save();
+render();
+
+
+  </script>
+</body>
+</html>
