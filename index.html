@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#080e12">
-  <meta name="description" content="Your daily missions. Your real-world progression. Track Health, Stamina, Focus, tasks and rewards.">
+  <meta name="theme-color" content="#130d18">
+  <meta name="description" content="A pixel-art lifestyle RPG. Walk your home, track Health, Stamina and Focus, complete tasks, and decorate with earned rewards.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Lifestyle">
@@ -13,7 +13,7 @@
 /* Theme tokens are deliberately independent from layout and tracking logic. */
 :root {
   color-scheme: dark;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Trebuchet MS", -apple-system, BlinkMacSystemFont, sans-serif;
   font-synthesis: none;
   -webkit-tap-highlight-color: transparent;
   --bg: #080e12;
@@ -55,6 +55,7 @@ button { touch-action: manipulation; }
 .screen { width:100%; flex:1; padding:26px 18px 130px; outline:none; }
 .eyebrow { margin:0 0 9px; font-size:12px; font-weight:900; letter-spacing:.17em; color:var(--accent); text-transform:uppercase; }
 .page-title { margin:0; font-size:clamp(33px,7.8vw,66px); line-height:.97; font-weight:950; letter-spacing:-.055em; text-transform:uppercase; }
+.page-title,.banner-title,.brand-text strong,.big-value { font-family:Impact,"Arial Black","Trebuchet MS",sans-serif; font-stretch:condensed; letter-spacing:.01em; }
 .page-title .outline { color:transparent; -webkit-text-stroke:1px var(--muted); }
 .page-subtitle { margin:13px 0 0; color:var(--muted); line-height:1.55; max-width:640px; }
 .section-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:29px 0 15px; }
@@ -69,18 +70,24 @@ button { touch-action: manipulation; }
 .progress-fill { height:100%; background:var(--accent); transition:width .25s ease; }
 .stat-list { display:grid; gap:12px; }
 .stat-card { display:grid; grid-template-columns:110px minmax(0,1fr); gap:15px; align-items:center; border:1px solid var(--line); background:var(--panel); border-radius:8px; padding:17px 16px; position:relative; overflow:hidden; }
-.stat-card::before { content:""; position:absolute; top:0; left:0; height:100%; width:3px; background:var(--accent); opacity:.65; }
+.stat-card[data-stat="health"] { --stat-color:#f3a0bf; --stat-glow:rgba(243,160,191,.22); }
+.stat-card[data-stat="stamina"] { --stat-color:#80d9cf; --stat-glow:rgba(128,217,207,.22); }
+.stat-card[data-stat="focus"] { --stat-color:#a68af0; --stat-glow:rgba(166,138,240,.22); }
+.stat-card::before { content:""; position:absolute; top:0; left:0; height:100%; width:3px; background:var(--stat-color); opacity:.85; }
 .ring-wrap { position:relative; width:110px; aspect-ratio:1; display:grid; place-items:center; }
-.ring { width:100%; height:100%; overflow:visible; filter:drop-shadow(0 0 7px var(--accent-glow)); }
+.ring { width:100%; height:100%; overflow:visible; filter:drop-shadow(0 0 7px var(--stat-glow)); }
 .ring circle.track { fill:none; stroke:var(--ring-off); stroke-width:8; }
-.ring circle.segment { fill:none; stroke:var(--accent); stroke-width:8; stroke-linecap:round; }
+.ring circle.segment { fill:none; stroke:var(--stat-color); stroke-width:8; stroke-linecap:round; }
 .ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; }
-.ring-center .lv { color:var(--muted); font-size:10px; letter-spacing:.15em; font-weight:900; }
-.ring-center .num { font-size:37px; letter-spacing:-.09em; font-weight:950; margin:4px 5px 0 0; font-variant-numeric:tabular-nums; }
+.glyph-disc { display:grid; place-items:center; width:66%; aspect-ratio:1; border-radius:50%; background:#33383b; }
+.stat-glyph { width:72%; height:72%; fill:var(--stat-color); }
 .stat-meta { min-width:0; }
 .stat-label { font-weight:950; font-size:21px; letter-spacing:-.045em; text-transform:uppercase; }
 .stat-hint { margin:5px 0 7px; color:var(--muted); font-size:12px; line-height:1.35; }
-.quarter-count { font-size:12px; font-weight:900; letter-spacing:.07em; color:var(--accent); }
+.stat-level { font-size:12px; font-weight:900; letter-spacing:.08em; color:var(--muted); margin:7px 0 3px; }
+.stat-level strong { color:var(--text); font-size:15px; }
+.quarter-count { font-size:12px; font-weight:900; letter-spacing:.07em; color:var(--stat-color); }
+.stat-card .stat-actions .action-btn { background:var(--stat-color); }
 .stat-actions { margin-top:12px; display:flex; align-items:center; gap:9px; }
 .action-btn { border:0; background:var(--accent); color:#0b1213; border-radius:4px; font-size:13px; font-weight:950; padding:12px 15px; min-height:43px; line-height:1.1; transition:transform .13s,filter .13s; }
 .action-btn:active { transform:scale(.98); }
@@ -154,18 +161,64 @@ button { touch-action: manipulation; }
 .dialog-actions { display:flex; justify-content:flex-end; gap:9px; margin-top:24px; }
 .toast { display:none; position:fixed; bottom:calc(90px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100vw - 36px); background:var(--accent); color:#0a1413; border-radius:5px; z-index:10; padding:13px 17px; box-shadow:0 10px 30px rgba(0,0,0,.35); font-weight:900; font-size:13px; text-align:center; }
 .toast.visible { display:block; }
+.fuel-panel { border:1px solid var(--line); padding:16px; background:linear-gradient(110deg,#2a1a37,var(--panel)); border-radius:7px; }
+.fuel-badges,.fuel-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.fuel-badges { min-height:34px; align-items:center; margin-bottom:12px; }
+.fuel-badge { border:1px solid #80d9cf; background:#80d9cf25; color:#80d9cf; border-radius:20px; padding:8px 12px; font-size:11px; font-weight:900; letter-spacing:.05em; }
+.fuel-badge.focus { border-color:#a68af0; background:#a68af025; color:#c3abff; }
+.fuel-badge.health { border-color:#f3a0bf; background:#f3a0bf25; color:#f3a0bf; }
+.fuel-idle { color:var(--muted); font-size:13px; }
+.fuel-actions .action-btn { flex:1; font-size:11px; }
+.fuel-disclaimer { color:var(--muted); font-size:11px; line-height:1.5; margin:11px 0 0; }
+.home-hud { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:15px 0 10px; font-size:12px; font-weight:900; color:#f3b3ce; letter-spacing:.07em; }
+.home-mode-tabs { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin:5px 0 12px; }
+.home-mode-btn { padding:14px 8px; border:1px solid var(--line); border-radius:6px; color:var(--muted); background:var(--panel-raised); font-size:12px; font-weight:900; }
+.home-mode-btn.active { border-color:#f29cb8; color:#160e1b; background:linear-gradient(120deg,#f6a6be,#be91f4); }
+.home-game-frame { width:min(100%,520px); margin:0 auto; border:7px solid #54334e; border-radius:9px; background:#372d4b; padding:5px; box-shadow:0 9px 0 #21182c,0 22px 40px #07070c80; }
+#home-canvas { display:block; width:100%; height:auto; aspect-ratio:1; image-rendering:pixelated; cursor:crosshair; touch-action:manipulation; }
+.home-controls { display:grid; grid-template-columns:160px 1fr; gap:12px; align-items:center; margin:24px auto 0; max-width:520px; }
+.dpad { display:grid; grid-template-columns:repeat(3,47px); grid-template-rows:repeat(3,47px); gap:3px; }
+.dpad button { background:linear-gradient(145deg,#494162,#302b49); border:1px solid #816a91; border-radius:6px; color:#fff2f9; font-size:18px; font-weight:900; box-shadow:0 3px 0 #1d172f; }
+.dpad button:active { background:#cf88af; color:#271a33; transform:translateY(2px); }
+.dpad-center { display:grid; place-items:center; color:#b885be; }
+.home-interact-panel { background:var(--panel); border:1px solid var(--line); border-radius:7px; padding:14px; min-height:136px; }
+.home-interact-panel strong { font-size:15px; }
+.home-interact-panel p { color:var(--muted); font-size:12px; line-height:1.35; margin:6px 0 10px; }
+.home-interact-panel .action-btn { width:100%; font-size:11px; padding:10px; }
+.decorate-panel { background:var(--panel); border:1px solid var(--line); border-radius:7px; padding:16px; margin-top:22px; }
+.decorate-panel p,.home-partitions p { color:var(--muted); font-size:13px; line-height:1.5; margin:0 0 12px; }
+.decor-toolbar,.inventory-strip,.home-palette>div { display:flex; flex-wrap:wrap; gap:7px; }
+.decor-toolbar .action-btn { padding:10px; min-height:40px; font-size:11px; }
+.selected-item { margin:15px 0; padding:9px; border:1px dashed var(--line); color:#e9aed0; font-size:11px; font-weight:900; }
+.decorate-panel h3 { font-size:12px; letter-spacing:.09em; }
+.inventory-chip,.palette-btn { background:var(--panel-raised); border:1px solid var(--line); color:var(--text); border-radius:5px; padding:10px; font-size:12px; font-weight:800; }
+.inventory-chip.active,.palette-btn.active { border-color:#f6a6be; background:#f6a6be2b; }
+.inventory-strip>span { color:var(--muted); font-size:13px; }
+.home-pet-note { padding:13px 0 2px; font-size:13px; line-height:1.45; color:#dfc4d8; }
+.home-upgrade-line { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
+.home-upgrade-line span { border-top:4px solid var(--line); color:var(--muted); font-size:10px; text-align:center; padding-top:9px; font-weight:900; }
+.home-upgrade-line span.unlocked { border-top-color:#e89db4; color:#f4c2d3; }
+.home-palette,.home-partitions { border:1px solid var(--line); border-radius:6px; background:var(--panel); margin:14px 0; padding:16px; }
+.home-palette strong,.home-partitions strong { display:block; font-size:13px; margin:0 0 9px; }
+.home-palette>div { margin:0 0 14px; }
+.home-partitions .action-btn { margin:5px 6px 5px 0; font-size:11px; }
+.home-shop-list { display:grid; gap:9px; }
+.home-shop-card { display:flex; align-items:center; gap:11px; border:1px solid var(--line); background:var(--panel); border-radius:7px; padding:11px; min-width:0; }
+.home-shop-card .action-btn { min-width:65px; font-size:11px; padding:10px 8px; }
+.shop-pixel-icon { display:grid; place-items:center; background:var(--panel-raised); border:1px solid var(--line); border-radius:5px; flex:0 0 44px; height:44px; font-size:23px; }
+@media(max-width:390px) { .home-controls { grid-template-columns:145px 1fr; gap:8px; } .dpad { grid-template-columns:repeat(3,43px); grid-template-rows:repeat(3,43px); gap:3px; } .home-interact-panel { padding:9px; } .home-interact-panel strong { font-size:13px; } .home-shop-card { padding:9px; } .shop-pixel-icon { flex-basis:37px; height:37px; } }
 @media (min-width:700px) { .topbar { padding:22px 32px; } .screen { padding:40px 32px 140px; } .stat-list { grid-template-columns:repeat(3,minmax(0,1fr)); } .stat-card { grid-template-columns:1fr; justify-items:center; text-align:center; padding:22px 10px; } .stat-label { font-size:22px; } .stat-actions { justify-content:center; } .ring-wrap { width:130px; } .page-subtitle { font-size:18px; } .task-list,.reward-list { grid-template-columns:repeat(2,minmax(0,1fr)); } .bottom-nav { left:50%; transform:translateX(-50%); width:min(600px,100%); border-left:1px solid var(--line); border-right:1px solid var(--line); border-radius:12px 12px 0 0; } }
 @media (max-width:360px) { .stat-card { grid-template-columns:89px 1fr; padding:14px 10px; gap:10px; } .ring-wrap { width:88px; } .stat-label { font-size:18px; } .stat-actions .action-btn { font-size:11px; padding:10px 9px; } .screen { padding:22px 13px 125px; } .wallet-pill { padding:8px; } .brand-text strong { font-size:14px; } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
 
   </style>
 </head>
-<body data-theme="acid">
+<body data-theme="sunset">
   <div class="app-shell">
     <header class="topbar">
       <div class="brand" aria-label="Lifestyle Tracker">
         <span class="brand-emblem">LT<span class="emblem-dot">.</span></span>
-        <span class="brand-text"><strong>LIFESTYLE</strong><small>TRACKER // 01</small></span>
+        <span class="brand-text"><strong>LIFESTYLE</strong><small>TRACKER // 02</small></span>
       </div>
       <div class="wallet-pill" title="Virtual cash earned from tasks">
         <span class="wallet-icon">$</span>
@@ -182,8 +235,11 @@ button { touch-action: manipulation; }
       <button class="nav-item" type="button" data-tab="missions">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>MISSIONS</span>
       </button>
+      <button class="nav-item" type="button" data-tab="home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v9H3z"/><path d="M9 20v-7h6v7"/></svg><span>HOME</span>
+      </button>
       <button class="nav-item" type="button" data-tab="shop">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg><span>REWARDS</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg><span>STORE</span>
       </button>
       <button class="nav-item" type="button" data-tab="settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span>SETTINGS</span>
@@ -194,6 +250,186 @@ button { touch-action: manipulation; }
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <input type="file" id="import-file" accept="application/json,.json" hidden>
   <script type="module">
+// Pure rules for the phone-friendly, tile-based home simulator.
+const HOME_ITEMS = {
+  bed: { name:'Comfy bed', cost:400, w:2, h:2, kind:'bed', emoji:'🛏️' },
+  sofa: { name:'Soft sofa', cost:500, w:2, h:1, kind:'sofa', emoji:'🛋️' },
+  television: { name:'Television', cost:800, w:2, h:1, kind:'tv', emoji:'📺' },
+  console: { name:'Gaming console', cost:650, w:1, h:1, kind:'console', emoji:'🎮' },
+  dining: { name:'Dining table', cost:350, w:2, h:2, kind:'dining', emoji:'🍽️' },
+  utensils: { name:'Kitchen utensils', cost:100, w:1, h:1, kind:'utensils', emoji:'🍴' },
+  counter: { name:'Kitchen counter', cost:450, w:2, h:1, kind:'counter', emoji:'🍳' },
+  kittybed: { name:'Kitty bed', cost:150, w:1, h:1, kind:'kittybed', emoji:'🐾' },
+  tree: { name:'Garden tree', cost:250, w:1, h:1, kind:'tree', emoji:'🌳' },
+  plant: { name:'Potted plant', cost:120, w:1, h:1, kind:'plant', emoji:'🪴' },
+  bench: { name:'Garden bench', cost:200, w:2, h:1, kind:'bench', emoji:'🌿' },
+  calico: { name:'Calico cat', cost:1500, kind:'pet', emoji:'🐈' },
+};
+
+const HOME_UPGRADES = [
+  { tier:2, name:'Interior makeover', cost:1000, description:'Unlock four floor colorways and fresh wall colors.' },
+  { tier:3, name:'Remodeling permit', cost:5000, description:'Open or close the two interior room partitions.' },
+  { tier:4, name:'Backyard expansion', cost:15000, description:'Grow the property from 12×12 to 16×16 tiles.' },
+];
+
+const starter = [
+  { id:'starter-bed', item:'bed', x:0, y:0, rotation:0 },
+  { id:'starter-sofa', item:'sofa', x:5, y:1, rotation:0 },
+  { id:'starter-counter', item:'counter', x:0, y:5, rotation:0 },
+  { id:'starter-dining', item:'dining', x:9, y:4, rotation:0 },
+  { id:'starter-bench', item:'bench', x:8, y:10, rotation:0 },
+];
+
+function initialHome() {
+  return {
+    tier:1, floor:'rose', walls:'plum', partitions:{ bedroom:true, dining:true },
+    avatar:{ x:5, y:5, facing:'down' },
+    placed:starter.map(item => ({...item})), inventory:[], pets:[],
+    nextId:1,
+  };
+}
+
+function homeSize(home) { return home.tier >= 4 ? 16 : 12; }
+function itemSize(placed) {
+  const item = HOME_ITEMS[placed.item];
+  if (!item || item.kind === 'pet') return [0,0];
+  return placed.rotation % 2 ? [item.h,item.w] : [item.w,item.h];
+}
+
+function roomAt(home,x,y) {
+  if (x < 0 || y < 0 || x >= homeSize(home) || y >= homeSize(home)) return null;
+  if (y >= 8) return 'Backyard';
+  if (x < 4) return y < 4 ? 'Bedroom' : 'Kitchen';
+  if (x < 8) return 'Living room';
+  return 'Dining room';
+}
+
+function isWall(home,fromX,fromY,toX,toY) {
+  if (Math.abs(fromX-toX)+Math.abs(fromY-toY)!==1) return true;
+  if (!roomAt(home,toX,toY)) return true;
+  if (fromY===7 && toY===8 || fromY===8 && toY===7) return fromX!==6;
+  if (fromY===3 && toY===4 || fromY===4 && toY===3) return fromX<4 && fromX!==2;
+  if (fromX===3 && toX===4 || fromX===4 && toX===3) return fromY<4 && fromY!==2 && home.partitions.bedroom;
+  if (fromX===7 && toX===8 || fromX===8 && toX===7) return fromY<8 && fromY!==5 && home.partitions.dining;
+  return false;
+}
+
+function objectAt(home,x,y,excludeId=null) {
+  return home.placed.find(p => {
+    if (p.id===excludeId) return false;
+    const [w,h] = itemSize(p);
+    return x>=p.x && x<p.x+w && y>=p.y && y<p.y+h;
+  });
+}
+
+function canStand(home,x,y) {
+  return !!roomAt(home,x,y) && !objectAt(home,x,y);
+}
+
+function movePlayer(home,dx,dy) {
+  if (Math.abs(dx)+Math.abs(dy)!==1) return false;
+  home.avatar.facing = dx>0?'right':dx<0?'left':dy>0?'down':'up';
+  const {x,y} = home.avatar;
+  if (isWall(home,x,y,x+dx,y+dy) || !canStand(home,x+dx,y+dy)) return false;
+  home.avatar.x += dx; home.avatar.y += dy;
+  return true;
+}
+
+function canPlace(home,item,x,y,rotation=0,excludeId=null) {
+  if (!HOME_ITEMS[item] || HOME_ITEMS[item].kind==='pet') return false;
+  const [w,h] = itemSize({item,rotation});
+  if (!Number.isInteger(x) || !Number.isInteger(y)) return false;
+  if (!roomAt(home,x,y) || !roomAt(home,x+w-1,y+h-1)) return false;
+  const room = roomAt(home,x,y);
+  if (room==='Backyard' && !['tree','bench','plant','kittybed'].includes(item)) return false;
+  if (room!=='Backyard' && ['tree','bench'].includes(item)) return false;
+  for (let yy=y;yy<y+h;yy++) for(let xx=x;xx<x+w;xx++) {
+    if (roomAt(home,xx,yy)!==room || objectAt(home,xx,yy,excludeId) || (home.avatar.x===xx && home.avatar.y===yy)) return false;
+    // Reserve the hallways and entrances for movement.
+    if ((xx===2 && yy===3) || (xx===3 && yy===2) || (xx===4 && yy===2) ||
+        (xx===7 && yy===5) || (xx===8 && yy===5) || (xx===6 && (yy===7 || yy===8))) return false;
+  }
+  return true;
+}
+
+function placeInventoryItem(home,item,x,y,rotation=0) {
+  const index=home.inventory.indexOf(item);
+  if (index<0 || !canPlace(home,item,x,y,rotation)) return false;
+  home.inventory.splice(index,1);
+  home.placed.push({id:`owned-${home.nextId++}`,item,x,y,rotation});
+  return true;
+}
+
+function storePlacedItem(home,id) {
+  const index=home.placed.findIndex(item=>item.id===id);
+  if(index<0) return false;
+  home.inventory.push(home.placed[index].item);
+  home.placed.splice(index,1);
+  return true;
+}
+
+function movePlacedItem(home,id,x,y,rotation) {
+  const item=home.placed.find(p=>p.id===id);
+  if(!item || !canPlace(home,item.item,x,y,rotation,id)) return false;
+  Object.assign(item,{x,y,rotation});
+  return true;
+}
+
+function purchaseHomeItem(state,itemId) {
+  const item=HOME_ITEMS[itemId];
+  if (!item || state.wallet<item.cost) return false;
+  if (item.kind==='pet' && state.home.pets.includes(itemId)) return false;
+  state.wallet -= item.cost;
+  if(item.kind==='pet') state.home.pets.push(itemId);
+  else state.home.inventory.push(itemId);
+  return true;
+}
+
+function purchaseHomeUpgrade(state) {
+  const upgrade=HOME_UPGRADES.find(u=>u.tier===state.home.tier+1);
+  if(!upgrade || state.wallet<upgrade.cost) return false;
+  state.wallet-=upgrade.cost; state.home.tier=upgrade.tier;
+  return true;
+}
+
+function nearbyHomeObject(home) {
+  const {x,y}=home.avatar;
+  if (home.pets.includes('calico') && x>=5 && x<=8 && y>=3 && y<=5) return {name:'Calico cat',kind:'pet'};
+  for(const p of home.placed) {
+    const [w,h]=itemSize(p);
+    const distanceX=Math.max(p.x-x,0,x-(p.x+w-1));
+    const distanceY=Math.max(p.y-y,0,y-(p.y+h-1));
+    if(distanceX+distanceY<=1) return {name:HOME_ITEMS[p.item].name,kind:p.item};
+  }
+  return null;
+}
+
+function hydrateHome(input) {
+  const fresh=initialHome();
+  if (!input || typeof input!=='object') return fresh;
+  const tier=Math.max(1,Math.min(4,Math.floor(Number(input.tier)||1)));
+  const home={...fresh,tier,
+    floor: tier>=2 && ['rose','mint','cream','night'].includes(input.floor) ? input.floor : 'rose',
+    walls: tier>=2 && ['plum','teal','peach','ink'].includes(input.walls) ? input.walls : 'plum',
+    partitions:{bedroom:tier>=3?input.partitions?.bedroom!==false:true,dining:tier>=3?input.partitions?.dining!==false:true},
+    inventory:Array.isArray(input.inventory)?input.inventory.filter(i=>HOME_ITEMS[i]&&HOME_ITEMS[i].kind!=='pet').slice(0,250):[],
+    pets:Array.isArray(input.pets)?['calico'].filter(p=>input.pets.includes(p)):[],
+    nextId:Math.max(1,Math.floor(Number(input.nextId)||1)),
+  };
+  const savedX=Math.floor(Number(input.avatar?.x)),savedY=Math.floor(Number(input.avatar?.y));
+  home.avatar=roomAt(home,savedX,savedY)?{x:savedX,y:savedY,facing:['up','down','left','right'].includes(input.avatar?.facing)?input.avatar.facing:'down'}:{...fresh.avatar};
+  home.placed=[];
+  if(Array.isArray(input.placed)) {
+    for(const p of input.placed.slice(0,250)) {
+      if(!p || !HOME_ITEMS[p.item] || HOME_ITEMS[p.item].kind==='pet') continue;
+      const candidate={id:String(p.id||`restored-${home.nextId++}`).slice(0,90),item:p.item,x:Number(p.x),y:Number(p.y),rotation:Number(p.rotation)===1?1:0};
+      if(canPlace(home,candidate.item,candidate.x,candidate.y,candidate.rotation)) home.placed.push(candidate);
+    }
+  } else home.placed=fresh.placed.map(p=>({...p}));
+  if(!canStand(home,home.avatar.x,home.avatar.y)) home.avatar={x:6,y:6,facing:'down'};
+  return home;
+}
+
 // Lifestyle Tracker's rules live here, independent of its appearance.
 // A quarter is one step, regardless of the current level.
 
@@ -232,7 +468,7 @@ function advanceStat(stat, amount) {
 
 function initialState(today = dateKey()) {
   return {
-    version: 1,
+    version: 2,
     createdAt: today,
     lastSettledDate: shiftDate(today, -1),
     stats: {
@@ -242,9 +478,12 @@ function initialState(today = dateKey()) {
     },
     dayLog: {},
     tasks: [
-      { id: 'task-1', title: 'Make my bed', cash: 25, completedDates: [] },
-      { id: 'task-2', title: 'Read or study', cash: 75, completedDates: [] },
-      { id: 'task-3', title: 'Tidy my space', cash: 50, completedDates: [] },
+      { id: 'daily-clean', title: 'Clean apartment', cash: 25, completedDates: [] },
+      { id: 'daily-outside', title: 'Go outside for an hour', cash: 100, completedDates: [] },
+      { id: 'daily-litter', title: 'Kitty litter', cash: 50, completedDates: [] },
+      { id: 'daily-vacuum', title: 'Vacuum entire apartment', cash: 50, completedDates: [] },
+      { id: 'daily-meals', title: 'Eat 3 meals a day', cash: 100, completedDates: [] },
+      { id: 'daily-dishes', title: 'Dishes', cash: 25, completedDates: [] },
     ],
     rewards: [
       { id: 'reward-1', title: '30 minutes of guilt-free gaming', cost: 150 },
@@ -254,7 +493,9 @@ function initialState(today = dateKey()) {
     wallet: 0,
     transactions: [],
     activity: [],
-    theme: 'acid',
+    theme: 'sunset',
+    fuelUntil:{ tea:0, protein:0 },
+    home:initialHome(),
   };
 }
 
@@ -298,6 +539,13 @@ function hydrate(input, today = dateKey()) {
     cost: Math.max(1, Math.min(1000000, Math.floor(Number(item?.cost) || 100))),
   }));
   state.tasks = cleanTasks;
+  if (input.version === 1) {
+    const oldDefaults = { 'task-1':'Make my bed', 'task-2':'Read or study', 'task-3':'Tidy my space' };
+    const untouched = cleanTasks.filter(t => oldDefaults[t.id] === t.title);
+    if (untouched.length) {
+      state.tasks = [...defaults.tasks, ...cleanTasks.filter(t => !untouched.includes(t))].slice(0, 150);
+    }
+  }
   state.rewards = cleanRewards;
   state.wallet = Math.max(0, Math.min(100000000, Math.floor(Number(input.wallet) || 0)));
   state.transactions = Array.isArray(input.transactions) ? input.transactions.slice(0, 200).filter(x => x && typeof x === 'object').map(x => ({
@@ -306,7 +554,12 @@ function hydrate(input, today = dateKey()) {
   state.activity = Array.isArray(input.activity) ? input.activity.slice(0, 250).filter(x => x && typeof x === 'object' && STATS[x.stat]).map(x => ({
     stat: x.stat, day: validDate(x.day) ? x.day : today, change: Math.max(-1, Math.min(1, Number(x.change) || 0)), reason: safeText(x.reason, 30), level: Math.max(1, Math.floor(Number(x.level) || 1)), quarters: Math.max(0, Math.min(3, Math.floor(Number(x.quarters) || 0))),
   })) : [];
-  state.theme = ['acid', 'sunset', 'ice', 'mono'].includes(input.theme) ? input.theme : 'acid';
+  state.theme = ['acid', 'sunset', 'ice', 'mono'].includes(input.theme) ? input.theme : 'sunset';
+  state.fuelUntil = {
+    tea: Math.max(0,Math.min(4102444800000,Number(input.fuelUntil?.tea)||0)),
+    protein: Math.max(0,Math.min(4102444800000,Number(input.fuelUntil?.protein)||0)),
+  };
+  state.home=hydrateHome(input.home);
   return state;
 }
 
@@ -359,6 +612,112 @@ function settleMissedDays(state, today = dateKey()) {
   return missed;
 }
 
+// Canvas-only pixel art: deliberately original sprites, no downloaded game assets.
+
+const T = 32;
+const palette = {
+  rose:{bedroom:['#c9989e','#bd8c94'],living:['#bd899d','#b57c91'],dining:['#d2af9d','#c7a28f'],kitchen:['#b9c3ba','#a6b4b0']},
+  mint:{bedroom:['#9fc0b9','#91aea8'],living:['#a0bcb1','#8dafa5'],dining:['#c7c9a5','#bbbe96'],kitchen:['#9ac3c6','#89b4bd']},
+  cream:{bedroom:['#e1c9aa','#d4bc9f'],living:['#dfc9ac','#d0b895'],dining:['#e3d4b7','#d4c6ab'],kitchen:['#d6dad1','#c8cfc8']},
+  night:{bedroom:['#6c647f','#605975'],living:['#736079','#67546d'],dining:['#8f7880','#826c73'],kitchen:['#686e82','#5d6578']},
+};
+const wallPal={plum:['#3b2e4f','#806184'],teal:['#284e59','#59888a'],peach:['#8d5b5d','#de968a'],ink:['#293345','#596277']};
+
+function drawHome(canvas,home,chosen=null) {
+  if (!canvas) return;
+  const n=homeSize(home);
+  canvas.width=n*T;canvas.height=n*T;
+  const c=canvas.getContext('2d');
+  if(!c) return;
+  c.imageSmoothingEnabled=false;
+  const draw=(x,y,w,h,color)=>{c.fillStyle=color;c.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
+  const sq=(x,y,w,h,color)=>draw(x*T,y*T,w*T,h*T,color);
+  const shade=palette[home.floor]||palette.rose;
+  for(let y=0;y<n;y++) for(let x=0;x<n;x++) {
+    const room=roomAt(home,x,y);
+    if(room==='Backyard') {
+      const a=(x*17+y*31)%6;
+      sq(x,y,1,1,(x+y)%2?'#5b995f':'#6ca666');
+      draw(x*T+4+a,y*T+6,4,3,'#85b270');
+      draw(x*T+17,y*T+21,3,5,'#3e8157');
+    } else {
+      const p=room==='Bedroom'?shade.bedroom:room==='Kitchen'?shade.kitchen:room==='Living room'?shade.living:shade.dining;
+      sq(x,y,1,1,room==='Kitchen'?p[(x+y)%2]:p[y%2]);
+      if(room!=='Kitchen') draw(x*T+2,y*T+T-2,T-4,1,'#ffffff16');
+    }
+  }
+  const wall=wallPal[home.walls]||wallPal.plum;
+  const line=(x,y,w,h)=>{draw(x,y,w,h,wall[0]);draw(x,y,w,3,wall[1]);};
+  line(0,0,n*T,7);line(0,0,7,n*T);line(n*T-7,0,7,n*T);line(0,n*T-7,n*T,7);
+  for(let x=0;x<12;x++) if(x!==6) line(x*T,8*T-4,T,7);
+  for(let x=0;x<4;x++) if(x!==2) line(x*T,4*T-4,T,7);
+  if(home.partitions.bedroom) for(let y=0;y<4;y++) if(y!==2) line(4*T-4,y*T,7,T);
+  if(home.partitions.dining) for(let y=0;y<8;y++) if(y!==5) line(8*T-4,y*T,7,T);
+  // A bright pixel-frame doorway makes the route between rooms easy to spot.
+  for(const [x,y,wide] of [[2,4,true],[6,8,true],[4,2,false],[8,5,false]]) {
+    if(!wide && ((x===4&&!home.partitions.bedroom)||(x===8&&!home.partitions.dining))) continue;
+    if(wide) {draw(x*T,y*T-5,T,3,'#eac8ac');draw(x*T+3,y*T-2,4,4,'#f7dfb4');}
+    else {draw(x*T-5,y*T,3,T,'#eac8ac');draw(x*T-2,y*T+4,4,5,'#f7dfb4');}
+  }
+  for(const object of home.placed) sprite(c,object,draw);
+  if(home.pets.includes('calico')) catSprite(draw,7*T+5,4*T+5);
+  avatarSprite(draw,home.avatar.x*T+6,home.avatar.y*T+3,home.avatar.facing);
+  if(chosen) {
+    c.strokeStyle='#fbf2a6';c.lineWidth=3;c.setLineDash([5,3]);
+    c.strokeRect(chosen.x*T+1,chosen.y*T+1,T-2,T-2);c.setLineDash([]);
+  }
+}
+
+function sprite(c,obj,p) {
+  const {x,y,rotation,item}=obj;
+  const [w,h]=itemSize(obj);
+  const X=x*T,Y=y*T,W=w*T,H=h*T;
+  const frame=(inner,top,edge='#4b344c')=>{p(X+2,Y+5,W-4,H-7,edge);p(X+5,Y+2,W-10,H-9,inner);p(X+5,Y+2,W-10,5,top);};
+  if(item==='bed') {
+    frame('#f3c3d4','#f3e7db');p(X+7,Y+10,W-14,12,'#f5e9dc');p(X+7,Y+27,W-14,H-34,'#df7f9e');
+    p(X+9,Y+29,10,5,'#f5a7bc');p(X+W-19,Y+29,10,5,'#f5a7bc');
+  } else if(item==='sofa'||item==='bench') {
+    frame(item==='sofa'?'#8660a0':'#bd8665',item==='sofa'?'#b184bc':'#e5b47d');
+    p(X+8,Y+11,W-16,H-17,item==='sofa'?'#c6a2cc':'#cb955e');
+    p(X+W/2-2,Y+11,4,H-18,'#7d568b');
+  } else if(item==='television') {
+    frame('#293047','#4e536c');p(X+8,Y+8,W-16,H-15,'#4b919c');p(X+13,Y+12,W-28,3,'#8ee5d4');
+  } else if(item==='dining') {
+    frame('#d5a27b','#f5d2a1');p(X+9,Y+10,W-18,H-20,'#e9b886');p(X+17,Y+17,10,10,'#f9eee0');p(X+W-27,Y+H-27,10,10,'#f9eee0');
+  } else if(item==='counter') {
+    frame('#b8a4a0','#e5d6c6');p(X+11,Y+12,19,14,'#657c85');p(X+W-25,Y+12,11,4,'#ece6d8');
+  } else if(item==='tree') {
+    p(X+13,Y+18,7,12,'#78573d');p(X+6,Y+7,20,18,'#2e7d55');p(X+10,Y+2,13,18,'#42975f');p(X+12,Y+6,6,5,'#83b76b');
+  } else if(item==='plant') {
+    p(X+8,Y+21,16,8,'#bd7777');p(X+10,Y+8,12,17,'#287962');p(X+6,Y+11,20,7,'#4ba879');
+  } else if(item==='kittybed') {
+    p(X+2,Y+8,28,20,'#8d678c');p(X+6,Y+12,20,13,'#d7b3bc');p(X+10,Y+15,12,7,'#f7dbe2');
+  } else if(item==='console') {
+    p(X+6,Y+8,20,20,'#2f3650');p(X+10,Y+11,12,12,'#515d77');p(X+14,Y+13,5,3,'#75cabc');
+  } else if(item==='utensils') {
+    p(X+5,Y+8,22,20,'#d6c0aa');p(X+10,Y+11,2,13,'#565a63');p(X+15,Y+11,2,13,'#565a63');p(X+20,Y+11,3,13,'#aebdc0');
+  }
+  if(rotation%2 && w!==h) { /* dimensions rotate; art fills its rotated footprint. */ }
+}
+
+function avatarSprite(p,x,y,facing) {
+  p(x+4,y+24,7,5,'#282f4d');p(x+13,y+24,7,5,'#282f4d');
+  p(x+1,y+14,22,12,'#6b59b1');p(x+6,y+14,12,9,'#9078c5');
+  p(x+5,y+3,16,15,'#483146');p(x+7,y+7,12,10,'#dca98d');
+  p(x+4,y+2,16,6,'#352c44');p(x+1,y+3,10,5,'#352c44');
+  if(facing==='down') {p(x+9,y+12,2,2,'#303040');p(x+16,y+12,2,2,'#303040');}
+  if(facing==='left') p(x+7,y+12,3,2,'#303040');
+  if(facing==='right') p(x+16,y+12,3,2,'#303040');
+  p(x+2,y+18,3,8,'#dca98d');p(x+21,y+18,3,8,'#dca98d');
+}
+
+function catSprite(p,x,y) {
+  p(x+3,y+9,19,16,'#f4d2b3');p(x+2,y+4,8,11,'#f4d2b3');p(x+15,y+4,8,11,'#f4d2b3');
+  p(x+6,y+4,5,7,'#d87e56');p(x+13,y+11,10,11,'#3f414f');
+  p(x+7,y+15,3,3,'#313a4d');p(x+17,y+15,3,3,'#313a4d');p(x+12,y+19,3,2,'#c86e78');
+  p(x+22,y+18,4,4,'#f4d2b3');p(x+24,y+12,3,8,'#d87e56');
+}
+
 
 const STORAGE_KEY = 'lifestyle-tracker:v1';
 const screen = document.getElementById('screen');
@@ -366,8 +725,11 @@ const walletTop = document.getElementById('wallet-top');
 const dialog = document.getElementById('editor-dialog');
 const toastElement = document.getElementById('toast');
 const importFile = document.getElementById('import-file');
-const tabs = ['status', 'missions', 'shop', 'settings'];
+const tabs = ['status', 'missions', 'home', 'shop', 'settings'];
 let activeTab = 'status';
+let homeMode = 'walk';
+let homeSelection = null;
+let homeRotation = 0;
 let activeDate = dateKey();
 let toastTimer;
 let state = loadState();
@@ -415,8 +777,9 @@ function syncDay() {
 function render() {
   document.body.dataset.theme = state.theme;
   walletTop.textContent = amount(state.wallet);
-  const pages = { status: renderStatus, missions: renderMissions, shop: renderShop, settings: renderSettings };
+  const pages = { status: renderStatus, missions: renderMissions, home: renderHome, shop: renderShop, settings: renderSettings };
   screen.innerHTML = pages[activeTab]();
+  if (activeTab==='home') updateHomeCanvas();
   document.querySelectorAll('[data-tab]').forEach(button => {
     const isActive = button.dataset.tab === activeTab;
     button.classList.toggle('active', isActive);
@@ -425,14 +788,34 @@ function render() {
   });
 }
 
-function ringMarkup(stat, label) {
+function updateHomeCanvas() {
+  const canvas=document.getElementById('home-canvas');
+  let chosen=null;
+  if (homeSelection?.type==='placed') {
+    const p=state.home.placed.find(obj=>obj.id===homeSelection.id);
+    if(p) chosen={x:p.x,y:p.y};
+  }
+  drawHome(canvas,state.home,chosen);
+}
+
+function statGlyph(key) {
+  // Original vector versions of the reference's heart, bolt, and eye symbols.
+  const shapes = {
+    health: '<path d="M50 78 20 48C6 34 13 14 31 14c9 0 15 5 19 11 4-6 10-11 19-11 18 0 25 20 11 34L50 78Z"/>',
+    stamina: '<path d="M55 12 23 54h26l-5 34 34-46H53l2-30Z"/>',
+    focus: '<path d="M7 50C20 32 35 24 50 24s30 8 43 26C80 68 65 76 50 76S20 68 7 50Zm43-17a17 17 0 1 0 0 34 17 17 0 0 0 0-34Z" fill-rule="evenodd"/>',
+  };
+  return `<svg class="stat-glyph" viewBox="0 0 100 100" aria-hidden="true">${shapes[key]}</svg>`;
+}
+
+function ringMarkup(stat, label, key) {
   const paths = Array.from({ length:4 }, (_, index) => {
     const rotate = -90 + index * 90;
     return `<circle class="track" cx="50" cy="50" r="42" stroke-dasharray="56 264" transform="rotate(${rotate} 50 50)" />${index < stat.quarters ? `<circle class="segment" cx="50" cy="50" r="42" stroke-dasharray="56 264" transform="rotate(${rotate} 50 50)" />` : ''}`;
   }).join('');
   return `<div class="ring-wrap" role="img" aria-label="${label}: level ${stat.level}, ${stat.quarters} out of 4 quarters complete">
     <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">${paths}</svg>
-    <div class="ring-center" aria-hidden="true"><span class="lv">LEVEL</span><span class="num">${stat.level}</span></div>
+    <div class="ring-center" aria-hidden="true"><span class="glyph-disc">${statGlyph(key)}</span></div>
   </div>`;
 }
 
@@ -440,11 +823,12 @@ function statusCard(key) {
   const stat = state.stats[key];
   const def = STATS[key];
   const done = completed(key);
-  return `<article class="stat-card">
-    ${ringMarkup(stat, def.name)}
+  return `<article class="stat-card" data-stat="${key}">
+    ${ringMarkup(stat, def.name, key)}
     <div class="stat-meta">
       <div class="stat-label">${def.name}</div>
       <p class="stat-hint">${def.hint}</p>
+      <div class="stat-level">LEVEL <strong>${stat.level}</strong></div>
       <div class="quarter-count">${stat.quarters} / 4 QUARTERS</div>
       <div class="stat-actions">
         ${done ? `<span class="stat-completed">✓ LOGGED TODAY</span><button class="undo-link" data-action="undo-stat" data-id="${key}" aria-label="Undo today's ${def.name} exercise">Undo</button>` : `<button class="action-btn" data-action="log-stat" data-id="${key}">+ LOG ${def.action.toUpperCase()}</button>`}
@@ -464,6 +848,8 @@ function renderActivity() {
 
 function renderStatus() {
   const completedCount = Object.keys(STATS).filter(completed).length;
+  const now=Date.now();
+  const fuel=(key)=>Math.max(0,Math.ceil((state.fuelUntil[key]-now)/60000));
   return `<p class="eyebrow">PLAYER PROFILE // DAILY PROGRESSION</p>
     <h1 class="page-title">BUILD YOUR<br><span class="outline">CHARACTER.</span></h1>
     <p class="page-subtitle">Real-life effort. Game-style progression. Your next level is earned one day at a time.</p>
@@ -473,12 +859,44 @@ function renderStatus() {
       <div class="banner-copy">Complete one exercise for each stat today. Uncompleted stats lose one quarter after the day ends.</div>
       <div class="progress-track" aria-hidden="true"><div class="progress-fill" style="width:${(completedCount / 3)*100}%"></div></div>
     </section>
+    <div class="section-heading"><h2>Fueled up</h2><span class="section-aside">ONE-HOUR EMBLEMS</span></div>
+    <section class="fuel-panel"><div class="fuel-badges">
+      ${fuel('tea')?`<span class="fuel-badge">⚡ STAMINA · ${fuel('tea')}m</span><span class="fuel-badge focus">◉ FOCUS · ${fuel('tea')}m</span>`:''}
+      ${fuel('protein')?`<span class="fuel-badge health">♥ HEALTH · ${fuel('protein')}m</span>`:''}
+      ${!fuel('tea')&&!fuel('protein')?'<span class="fuel-idle">No active fuel emblems yet.</span>':''}
+    </div><div class="fuel-actions"><button class="action-btn secondary" data-action="fuel" data-value="tea">+ DRANK TEA</button><button class="action-btn secondary" data-action="fuel" data-value="protein">+ ATE PROTEIN</button></div>
+    <p class="fuel-disclaimer">Motivational badges only: not a claim that food or tea boosts your actual abilities. Timers refresh rather than stack.</p></section>
     <div class="section-heading"><h2>Core attributes</h2><span class="section-aside">+¼ PER SESSION</span></div>
     <section class="stat-list" aria-label="Stats">${Object.keys(STATS).map(statusCard).join('')}</section>
     <div class="section-heading"><h2>Recent activity</h2><span class="section-aside">AUTO-SAVED</span></div>
     ${renderActivity()}
     <div class="section-heading"><h2>System rules</h2></div>
     <div class="note-panel"><strong>Four quarters = one level.</strong> A logged exercise earns ¼ for its stat, once per day. Missing a day removes ¼. If a meter is empty, it immediately drops one level and becomes ¾ full at the lower level. The minimum level is 1. Planned rest days currently count as missed days.</div>`;
+}
+
+function renderHome() {
+  const home=state.home;
+  const room=roomAt(home,home.avatar.x,home.avatar.y);
+  const near=nearbyHomeObject(home);
+  const selected=homeSelection?.type==='inventory' ? HOME_ITEMS[homeSelection.item]?.name : homeSelection?.type==='placed' ? HOME_ITEMS[home.placed.find(obj=>obj.id===homeSelection.id)?.item]?.name : null;
+  return `<p class="eyebrow">PIXEL LIVING // THE PROPERTY</p>
+    <h1 class="page-title">YOUR<br><span class="outline">HIDEOUT.</span></h1>
+    <p class="page-subtitle">Walk your character through five spaces. Finish real-life missions, buy furniture, and remodel this little world.</p>
+    <div class="home-hud"><span>🏠 PROPERTY TIER ${home.tier} / 4</span><span>${escapeHtml(room||'Home').toUpperCase()}</span></div>
+    <div class="home-mode-tabs"><button class="home-mode-btn ${homeMode==='walk'?'active':''}" data-action="home-mode" data-value="walk">🎮 WALK & INTERACT</button><button class="home-mode-btn ${homeMode==='decorate'?'active':''}" data-action="home-mode" data-value="decorate">✎ DECORATE</button></div>
+    <div class="home-game-frame"><canvas id="home-canvas" aria-label="Top-down pixel-art home. Use the directional controls to move your character. Tap a tile in decorating mode to place furniture." width="384" height="384"></canvas></div>
+    ${homeMode==='walk'?`<div class="home-controls"><div class="dpad" aria-label="Movement controls"><span></span><button data-action="walk" data-value="up" aria-label="Walk up">▲</button><span></span><button data-action="walk" data-value="left" aria-label="Walk left">◀</button><span class="dpad-center">✦</span><button data-action="walk" data-value="right" aria-label="Walk right">▶</button><span></span><button data-action="walk" data-value="down" aria-label="Walk down">▼</button><span></span></div>
+      <div class="home-interact-panel"><div class="eyebrow">NEARBY</div><strong>${escapeHtml(near?.name||'Explore the rooms')}</strong><p>${near?'Get close and tap INTERACT to use it.':'Walk next to furniture or your cat.'}</p><button class="action-btn" data-action="interact" ${near?'':'disabled'}>✦ INTERACT</button></div></div>`:
+      `<div class="decorate-panel"><p>Choose a stored item, then tap an empty tile. Tap placed furniture to select it; tap another tile to move it. Doors, walls, and occupied spaces stay clear.</p>
+      <div class="decor-toolbar"><button class="action-btn secondary" data-action="rotate-item" ${homeSelection?'':'disabled'}>⟳ ROTATE</button><button class="action-btn secondary" data-action="store-item" ${homeSelection?.type==='placed'?'':'disabled'}>STORE ITEM</button><button class="action-btn ghost" data-action="clear-selection">CANCEL</button></div>
+      <div class="selected-item">${selected?`SELECTED: ${escapeHtml(selected)} · ${homeRotation?'ROTATED':'NORMAL'}`:'TAP A PIECE OF FURNITURE OR PICK FROM INVENTORY'}</div>
+      <h3>YOUR INVENTORY (${home.inventory.length})</h3><div class="inventory-strip">${home.inventory.length?home.inventory.map((id,index)=>`<button class="inventory-chip ${homeSelection?.type==='inventory'&&homeSelection.index===index?'active':''}" data-action="select-inventory" data-id="${escapeHtml(id)}" data-index="${index}">${HOME_ITEMS[id]?.emoji||'□'} ${escapeHtml(HOME_ITEMS[id]?.name||id)}</button>`).join(''):'<span>Empty for now. Buy furniture in the Store tab.</span>'}</div></div>`}
+    ${home.pets.includes('calico')?'<p class="home-pet-note">🐈 Your calico cat lives here permanently. Find it in the living area to give it a pet.</p>':'<p class="home-pet-note">🐾 The calico cat can move in for $1,500 from your Store. No feeding penalties.</p>'}
+    <div class="section-heading"><h2>Property upgrades</h2></div>
+    <div class="home-upgrade-line">${['STARTER','MAKEOVER','REMODEL','EXPAND'].map((part,index)=>`<span class="${index<home.tier?'unlocked':''}">${part}</span>`).join('')}</div>
+    ${home.tier>=2?`<div class="home-palette"><strong>Floor style</strong><div>${['rose','mint','cream','night'].map(id=>`<button data-action="set-floor" data-value="${id}" class="palette-btn ${home.floor===id?'active':''}">${id.toUpperCase()}</button>`).join('')}</div><strong>Wall color</strong><div>${['plum','teal','peach','ink'].map(id=>`<button data-action="set-walls" data-value="${id}" class="palette-btn ${home.walls===id?'active':''}">${id.toUpperCase()}</button>`).join('')}</div></div>`:''}
+    ${home.tier>=3?`<div class="home-partitions"><strong>Remodel partitions</strong><p>Open space between rooms while keeping essential doorways.</p><button class="action-btn secondary" data-action="toggle-wall" data-value="bedroom">${home.partitions.bedroom?'OPEN':'CLOSE'} BEDROOM WALL</button><button class="action-btn secondary" data-action="toggle-wall" data-value="dining">${home.partitions.dining?'OPEN':'CLOSE'} DINING WALL</button></div>`:''}
+    <div class="note-panel">Pixel-art furniture uses a 32-pixel tile grid. Your character and everything you buy are saved on this device with your existing progress. Keyboard arrows or WASD also work on a computer.</div>`;
 }
 
 function renderMissions() {
@@ -506,6 +924,10 @@ function renderShop() {
     <h1 class="page-title">REWARD<br><span class="outline">YOURSELF.</span></h1>
     <p class="page-subtitle">Set your own real-life rewards. The cash is virtual — the motivation is real.</p>
     <section class="money-card"><div class="eyebrow">AVAILABLE BALANCE</div><div class="big-value">${amount(state.wallet)}</div><div class="money-meta">Earn cash by completing missions. You choose how to spend it.</div></section>
+    <div class="section-heading"><h2>Home furniture & pets</h2><span class="section-aside">PERMANENT UNLOCKS</span></div>
+    <section class="home-shop-list">${Object.entries(HOME_ITEMS).map(([id,item])=>`<article class="home-shop-card"><span class="shop-pixel-icon">${item.emoji}</span><div class="reward-copy"><div class="reward-title">${escapeHtml(item.name)}</div><div class="reward-description">${item.kind==='pet'?'PET · ONE-TIME':'PIXEL FURNITURE'} · ${amount(item.cost)}</div></div><button class="action-btn" data-action="buy-home-item" data-id="${id}" ${state.wallet<item.cost||item.kind==='pet'&&state.home.pets.includes(id)?'disabled':''}>${item.kind==='pet'&&state.home.pets.includes(id)?'OWNED':'BUY'}</button></article>`).join('')}</section>
+    <div class="section-heading"><h2>Renovation shop</h2><span class="section-aside">UPGRADES IN ORDER</span></div>
+    <section class="home-shop-list">${HOME_UPGRADES.map(u=>`<article class="home-shop-card"><span class="shop-pixel-icon">⌂</span><div class="reward-copy"><div class="reward-title">${escapeHtml(u.name)}</div><div class="reward-description">${escapeHtml(u.description)} · ${amount(u.cost)}</div></div><button class="action-btn" data-action="buy-upgrade" ${state.home.tier>=u.tier||state.home.tier!==u.tier-1||state.wallet<u.cost?'disabled':''}>${state.home.tier>=u.tier?'OWNED':'BUY'}</button></article>`).join('')}</section>
     <div class="section-heading"><h2>Reward shop</h2><button class="action-btn" data-modal="reward">+ NEW REWARD</button></div>
     <section class="reward-list" aria-label="Available rewards">${state.rewards.length ? state.rewards.map((reward, index) => `
       <article class="reward-card"><div class="reward-emoji">${['★','✦','◆','◈'][index%4]}</div>
@@ -528,7 +950,7 @@ function renderSettings() {
     </div></section>
     <section class="settings-panel"><h2>Save your progress</h2><p>Your data is stored only in this browser on this device. Back up regularly, especially before clearing Safari data or changing phones.</p><div class="settings-buttons"><button class="action-btn" data-action="export">EXPORT BACKUP</button><button class="action-btn secondary" data-action="import">IMPORT BACKUP</button></div></section>
     <section class="settings-panel"><h2>Progression rules</h2><p>These rules are built into the tracking engine and don't change with the theme.</p><ul class="rule-list"><li>One Health, Stamina, and Focus session each per day</li><li>Completed session: <strong>+¼ meter</strong></li><li>Four quarters: <strong>level up, reset to 0/4</strong></li><li>Missed calendar day: <strong>−¼ meter</strong></li><li>At 0/4: <strong>level down, new meter at 3/4</strong></li><li>Level cannot fall below 1</li></ul></section>
-    <section class="settings-panel"><h2>Install on iPhone</h2><p>In Safari, open your published app, tap Share, then Add to Home Screen. Choose Open as Web App if prompted. The app can then launch from your Home Screen.</p><div class="fine-print">Version 1.0 · Original game-inspired interface. Not affiliated with Rockstar Games or Grand Theft Auto.</div></section>
+    <section class="settings-panel"><h2>Install on iPhone</h2><p>In Safari, open your published app, tap Share, then Add to Home Screen. Choose Open as Web App if prompted. The app can then launch from your Home Screen.</p><div class="fine-print">Version 2.0 · Original game-inspired interface and pixel art. Not affiliated with Rockstar Games or Grand Theft Auto.</div></section>
     <section class="settings-panel"><h2>Start over</h2><p>Deleting local data is permanent unless you have exported a backup.</p><button class="action-btn danger" data-action="reset">RESET ALL DATA</button></section>`;
 }
 
@@ -579,6 +1001,58 @@ function redeem(id) {
   save(); render(); showToast(`Redeemed: ${reward.title}`);
 }
 
+function spendHomeItem(id) {
+  const item=HOME_ITEMS[id];
+  if(!item || !purchaseHomeItem(state,id)) return showToast('Not enough cash, or already owned');
+  state.transactions.unshift({id:uniqueId('tx'),title:`Home: ${item.name}`,amount:-item.cost,day:activeDate});
+  state.transactions.length=Math.min(200,state.transactions.length);
+  save();render();showToast(item.kind==='pet'?'Your calico cat moved in!':'Purchased! Place it from Home → Decorate.');
+}
+
+function upgradeHome() {
+  const next=HOME_UPGRADES.find(u=>u.tier===state.home.tier+1);
+  if(!next || !purchaseHomeUpgrade(state)) return showToast('Earn more cash to unlock this renovation');
+  state.transactions.unshift({id:uniqueId('tx'),title:next.name,amount:-next.cost,day:activeDate});
+  save();render();showToast(`${next.name} unlocked!`);
+}
+
+function stepHome(direction) {
+  const move={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[direction];
+  if(!move) return;
+  if(movePlayer(state.home,...move)) save();
+  render();
+}
+
+function interactAtHome() {
+  const found=nearbyHomeObject(state.home);
+  if(!found) return showToast('Walk up to furniture or a pet first');
+  const messages={pet:'You petted your calico cat. Purr! ♥',bed:'Time to recharge. Your room feels cozy.',sofa:'You settled in on the sofa.',television:'The television flickers on.',console:'Gaming mode activated!',dining:'You sit down for a meal.',counter:'You admire your neat kitchen.',utensils:'Everything is ready for cooking.',kittybed:'Your kitty has a cozy place to sleep.',tree:'You take in the fresh garden air.',plant:'Your plant looks lovely.',bench:'You relax on the garden bench.'};
+  showToast(messages[found.kind]||`You interacted with ${found.name}`);
+}
+
+function tapHomeCanvas(event) {
+  if(activeTab!=='home'||homeMode!=='decorate') return;
+  const canvas=event.target;
+  const rect=canvas.getBoundingClientRect();
+  const x=Math.floor((event.clientX-rect.left)/rect.width*homeSize(state.home));
+  const y=Math.floor((event.clientY-rect.top)/rect.height*homeSize(state.home));
+  const found=objectAt(state.home,x,y);
+  if(found) {
+    homeSelection={type:'placed',id:found.id};homeRotation=found.rotation;
+    render();return;
+  }
+  if(!homeSelection) return showToast('Select an item from inventory or tap existing furniture');
+  if(homeSelection.type==='inventory') {
+    if(!placeInventoryItem(state.home,homeSelection.item,x,y,homeRotation)) return showToast('Cannot place here — keep walls and walkways clear');
+    homeSelection=null;homeRotation=0;
+    save();render();showToast('Furniture placed!');
+  } else {
+    if(!movePlacedItem(state.home,homeSelection.id,x,y,homeRotation)) return showToast('That tile is blocked or outside the room');
+    homeSelection=null;homeRotation=0;
+    save();render();showToast('Furniture moved!');
+  }
+}
+
 function exportBackup() {
   const blob = new Blob([JSON.stringify({ ...state, exportedAt:new Date().toISOString() }, null, 2)], { type:'application/json' });
   const href = URL.createObjectURL(blob);
@@ -590,6 +1064,7 @@ function exportBackup() {
 }
 
 document.addEventListener('click', event => {
+  if(event.target?.id==='home-canvas') {tapHomeCanvas(event);return;}
   const tab = event.target.closest('[data-tab]');
   if (tab && tabs.includes(tab.dataset.tab)) {
     activeTab = tab.dataset.tab; render(); window.scrollTo({ top:0, behavior:'auto' }); return;
@@ -603,6 +1078,19 @@ document.addEventListener('click', event => {
     case 'log-stat': changeStat(id); break;
     case 'undo-stat': changeStat(id, true); break;
     case 'claim-task': claimTask(id); break;
+    case 'buy-home-item': spendHomeItem(id); break;
+    case 'buy-upgrade': upgradeHome(); break;
+    case 'walk': stepHome(value); break;
+    case 'interact': interactAtHome(); break;
+    case 'home-mode':homeMode=value;homeSelection=null;homeRotation=0;render();break;
+    case 'select-inventory': homeSelection={type:'inventory',item:id,index:Number(button.dataset.index)};homeRotation=0;render();break;
+    case 'rotate-item': if(homeSelection){homeRotation=1-homeRotation;render();}break;
+    case 'store-item':if(homeSelection?.type==='placed'&&storePlacedItem(state.home,homeSelection.id)){homeSelection=null;homeRotation=0;save();render();showToast('Furniture returned to inventory');}break;
+    case 'clear-selection':homeSelection=null;homeRotation=0;render();break;
+    case 'set-floor':if(state.home.tier>=2){state.home.floor=value;save();render();}break;
+    case 'set-walls':if(state.home.tier>=2){state.home.walls=value;save();render();}break;
+    case 'toggle-wall':if(state.home.tier>=3&&['bedroom','dining'].includes(value)){state.home.partitions[value]=!state.home.partitions[value];save();render();}break;
+    case 'fuel':if(['tea','protein'].includes(value)){state.fuelUntil[value]=Date.now()+60*60*1000;save();render();showToast('One-hour emblems activated');}break;
     case 'redeem': redeem(id); break;
     case 'remove-task':
       if (confirm('Remove this daily task? Previously earned cash will stay in your wallet.')) { state.tasks = state.tasks.filter(item => item.id !== id); save(); render(); }
@@ -647,7 +1135,7 @@ importFile.addEventListener('change', async () => {
   if (!file) return;
   try {
     const raw = JSON.parse(await file.text());
-    if (raw?.version !== 1 || !raw.stats?.health || !raw.stats?.stamina || !raw.stats?.focus) throw new Error('Not a Lifestyle Tracker backup');
+    if (![1,2].includes(raw?.version) || !raw.stats?.health || !raw.stats?.stamina || !raw.stats?.focus) throw new Error('Not a Lifestyle Tracker backup');
     if (!confirm('Replace all current progress with this backup? Export your current data first if you want to keep it.')) return;
     state = hydrate(raw, activeDate);
     syncDay(); save(); render(); showToast('Backup restored successfully');
@@ -656,7 +1144,14 @@ importFile.addEventListener('change', async () => {
 });
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { syncDay(); render(); } });
-setInterval(() => { if (dateKey() !== activeDate) { syncDay(); render(); } }, 60_000);
+setInterval(() => { if (dateKey() !== activeDate) { syncDay(); render(); } else if(activeTab==='status' && (state.fuelUntil.tea>Date.now()||state.fuelUntil.protein>Date.now())) render(); }, 60_000);
+
+document.addEventListener('keydown', event => {
+  if(activeTab!=='home'||homeMode!=='walk'||dialog.open||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
+  const key={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right'}[event.key];
+  if(key){event.preventDefault();stepHome(key);}
+  if(event.key===' '){event.preventDefault();interactAtHome();}
+});
 
 syncDay();
 save();
