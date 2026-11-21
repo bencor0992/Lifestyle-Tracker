@@ -296,6 +296,29 @@ button { touch-action: manipulation; }
 .catalog-button { min-height:42px; font-size:11px; padding:10px 4px; }
 .catalog-button:disabled { opacity:.53; }
 .settings-panel .fine-print { margin-top:14px; }
+/* Real-world reward shop: readable at phone widths, with explicit redemption. */
+.reward-intro { margin:8px 0 15px; color:var(--muted); font-size:13px; line-height:1.5; }
+.reward-section-title { display:flex; justify-content:space-between; align-items:center; margin:24px 0 10px; padding-bottom:7px; border-bottom:1px solid #60465f; color:#f2bfd6; font-size:12px; font-weight:900; letter-spacing:.09em; }
+.reward-section-title small { color:#c6b7c7; font-size:10px; }
+.reward-list { display:grid; grid-template-columns:minmax(0,1fr); gap:9px; }
+.reward-card { display:grid; grid-template-columns:48px minmax(0,1fr) 85px; align-items:center; gap:10px; border:1px solid #574054; border-radius:9px; padding:11px; background:linear-gradient(115deg,#312238,#1e1928); }
+.reward-card.affordable { border-left:3px solid #92cfbd; }
+.reward-icon { width:48px; height:49px; display:grid; place-items:center; background:linear-gradient(145deg,#4e344e,#312738); border:1px solid #775272; border-radius:8px; font-size:26px; }
+.reward-copy { min-width:0; }
+.reward-name { display:block; font-size:13px; line-height:1.3; font-weight:900; color:#f8e6ee; }
+.reward-detail { display:block; margin-top:4px; font-size:11px; line-height:1.35; color:#c8bbc8; }
+.reward-price { display:block; font-size:17px; color:#f1b3cc; font-weight:900; font-variant-numeric:tabular-nums; text-align:center; }
+.reward-card-actions { display:grid; gap:5px; }
+.reward-card .reward-redeem { min-height:35px; padding:7px 3px; font-size:10px; }
+.reward-redeem:disabled { opacity:.46; cursor:not-allowed; }
+.reward-footnote { margin:16px 0 3px; font-size:11px; line-height:1.55; color:#cfb9c8; }
+.reward-ledger { display:grid; gap:7px; }
+.reward-ledger-row { display:flex; justify-content:space-between; gap:10px; padding:11px; background:#291d30; border:1px solid #49344c; border-radius:5px; }
+.reward-ledger-row strong { font-size:12px; }
+.reward-ledger-row small { display:block; margin-top:3px; font-size:10px; color:#b7a8b8; }
+.reward-ledger-row .spent { color:#f5b0c2; font-weight:900; font-size:12px; white-space:nowrap; }
+@media(min-width:700px) { .reward-list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:370px) { .reward-card { grid-template-columns:42px minmax(0,1fr) 73px; gap:6px; padding:9px 6px; } .reward-icon { width:42px; height:45px; font-size:22px; } .reward-price { font-size:15px; } }
 @media (min-width:700px) { .hero-stage.compact { width:min(100%,430px); } .hero-stage.compact #hero-canvas { max-height:none; } .catalog-list { grid-template-columns:repeat(2,minmax(0,1fr)); } .hero-inventory { grid-template-columns:repeat(3,minmax(0,1fr)); } .equip-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 @media (max-width:390px) { .catalog-card { grid-template-columns:66px minmax(0,1fr) 65px; gap:7px; padding:7px; } .catalog-art canvas { width:66px; height:66px; } .catalog-name { font-size:12px; } .catalog-button { font-size:10px; } .store-tab { font-size:10px; } .inventory-card { grid-template-columns:52px 1fr; padding:7px; gap:6px; } .inventory-card canvas { width:52px; height:52px; } .equip-slot { padding:8px 5px; } .slot-text strong { font-size:11px; } }
 
@@ -327,7 +350,7 @@ button { touch-action: manipulation; }
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 5 6v7c0 5 4 8 7 9 3-1 7-4 7-9V6z"/><path d="m9 12 2 2 4-5"/></svg><span>HERO</span>
       </button>
       <button class="nav-item" type="button" data-tab="shop">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg><span>STORE</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg><span>REWARDS</span>
       </button>
       <button class="nav-item" type="button" data-tab="settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span>SETTINGS</span>
@@ -494,6 +517,27 @@ const STATS = {
   focus: { name: 'Focus', short: 'FOCUS', action: 'Focus session', hint: 'Distraction-free work or practice', symbol: '◎' },
 };
 
+// Fixed, repeatable real-world rewards. Currency is virtual: spending a
+// splurge allowance means permission to use money already in your own budget.
+const REAL_REWARDS=[
+  {id:'gaming-half',name:'30 minutes of video games',category:'Leisure',cost:50,icon:'🎮',detail:'Half an hour of guilt-free play'},
+  {id:'gaming-hour',name:'1 hour of video games',category:'Leisure',cost:100,icon:'🕹️',detail:'Your one-hour gaming reward'},
+  {id:'gaming-two',name:'2 hours of video games',category:'Leisure',cost:200,icon:'🎮',detail:'A longer, uninterrupted session'},
+  {id:'scroll-half',name:'30 minutes of social media',category:'Leisure',cost:75,icon:'📱',detail:'Optional browsing time'},
+  {id:'movie',name:'Movie night',category:'Leisure',cost:200,icon:'🎬',detail:'One movie or two streaming episodes'},
+  {id:'snack',name:'Favorite snack',category:'Treats',cost:150,icon:'🍫',detail:'Pick up a special treat'},
+  {id:'coffee',name:'Specialty coffee or tea',category:'Treats',cost:200,icon:'☕',detail:'A café drink you enjoy'},
+  {id:'dessert',name:'Dessert or ice cream',category:'Treats',cost:300,icon:'🍨',detail:'A dessert outing or extra treat'},
+  {id:'takeout',name:'Takeout upgrade',category:'Treats',cost:600,icon:'🥡',detail:'Choose takeout over a usual meal'},
+  {id:'restaurant',name:'Restaurant outing',category:'Treats',cost:1200,icon:'🍽️',detail:'An optional meal out'},
+  {id:'splurge-5',name:'$5 splurge allowance',category:'Splurge Money',cost:500,icon:'💵',detail:'Up to $5 from your existing budget'},
+  {id:'splurge-10',name:'$10 splurge allowance',category:'Splurge Money',cost:1000,icon:'💵',detail:'Up to $10 from your existing budget'},
+  {id:'splurge-20',name:'$20 splurge allowance',category:'Splurge Money',cost:2000,icon:'💸',detail:'Up to $20 from your existing budget'},
+  {id:'splurge-35',name:'$35 splurge allowance',category:'Splurge Money',cost:3500,icon:'💸',detail:'Up to $35 from your existing budget'},
+  {id:'splurge-50',name:'$50 splurge allowance',category:'Splurge Money',cost:5000,icon:'💰',detail:'Up to $50 from your existing budget'},
+];
+const REWARD_LOOKUP=Object.fromEntries(REAL_REWARDS.map(item=>[item.id,item]));
+
 function dateKey(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -547,6 +591,7 @@ function initialState(today = dateKey()) {
     ],
     wallet: 0,
     transactions: [],
+    rewardClaims: [],
     activity: [],
     theme: 'sunset',
     hero:initialHero(),
@@ -605,6 +650,10 @@ function hydrate(input, today = dateKey()) {
   state.transactions = Array.isArray(input.transactions) ? input.transactions.slice(0, 200).filter(x => x && typeof x === 'object').map(x => ({
     id: safeText(x.id, 100), title: safeText(x.title), amount: Math.max(-1000000, Math.min(1000000, Math.floor(Number(x.amount) || 0))), day: validDate(x.day) ? x.day : today,
   })) : [];
+  state.rewardClaims=Array.isArray(input.rewardClaims)?input.rewardClaims.slice(0,200).filter(x=>x&&REWARD_LOOKUP[x.rewardId]&&validDate(x.day)).map(x=>({
+    rewardId:x.rewardId,title:REWARD_LOOKUP[x.rewardId].name,cost:REWARD_LOOKUP[x.rewardId].cost,
+    day:x.day,at:safeText(x.at,35),
+  })):[];
   state.activity = Array.isArray(input.activity) ? input.activity.slice(0, 250).filter(x => x && typeof x === 'object' && STATS[x.stat]).map(x => ({
     stat: x.stat, day: validDate(x.day) ? x.day : today, change: Math.max(-1, Math.min(1, Number(x.change) || 0)), reason: safeText(x.reason, 30), level: Math.max(1, Math.floor(Number(x.level) || 1)), quarters: Math.max(0, Math.min(3, Math.floor(Number(x.quarters) || 0))),
   })) : [];
@@ -1837,9 +1886,6 @@ const toastElement=document.getElementById('toast');
 const importFile=document.getElementById('import-file');
 const tabs=['status','missions','hero','shop','settings'];
 let activeTab='status';
-let storeFilter='weapon';
-let storeRarity='basic';
-let storeQuery='';
 let activeDate=dateKey();
 let toastTimer;
 let state=loadState();
@@ -1847,7 +1893,12 @@ let state=loadState();
 let devMode=false;
 let devPreview=null;
 function activeStats(){return devMode&&devPreview?devPreview.stats:state.stats;}
-function activeEquipment(){return devMode&&devPreview?devPreview.equipped:state.hero.equipped;}
+function activeEquipment(){
+  // Retired equipment is retained in old backups, but no weapon, armor or
+  // shield is displayed or purchased by this rewards-only edition.
+  const saved=devMode&&devPreview?devPreview.equipped:state.hero.equipped;
+  return {weapon:null,armor:null,shield:null,companion:saved.companion};
+}
 function freshDevPreview(){return {
   stats:Object.fromEntries(Object.entries(state.stats).map(([key,value])=>[key,{...value}])),
   equipped:{...state.hero.equipped},
@@ -1885,7 +1936,7 @@ function render(){
   const views={status:renderStatus,missions:renderMissions,hero:renderHero,shop:renderShop,settings:renderSettings};
   screen.innerHTML=views[activeTab]();
   if(activeTab==='hero'||activeTab==='status')drawHero(document.getElementById('hero-canvas'),activeStats(),activeEquipment());
-  if(activeTab==='shop'||activeTab==='hero'){
+  if(activeTab==='hero'){
     document.querySelectorAll('canvas[data-item]').forEach(canvas=>drawItemIcon(canvas,HERO_INDEX[canvas.dataset.item]));
   }
   document.querySelectorAll('[data-tab]').forEach(button=>{
@@ -1917,7 +1968,7 @@ function statusCard(key){
 function heroStage(compact=false){
   const eq=activeEquipment(),stats=activeStats();
   const pet=HERO_INDEX[eq.companion];
-  return `<section class="hero-stage ${compact?'compact':''}"><div class="hero-canvas-frame"><div class="stage-upper"><span>CHARACTER // 001</span><span class="stage-live">● ACTIVE</span></div>${devMode?'<span class="hero-dev-tag">DEV PREVIEW</span>':''}<canvas id="hero-canvas" width="240" height="320" aria-label="Human-proportioned pixel art hero with dark center-parted hair and glasses. Health affects muscle definition, Stamina affects energy, and Focus affects concentration. Equipped items are held and worn, with one companion beside the hero."></canvas><div class="stage-bottom"><span>${eq.weapon?escapeHtml(HERO_INDEX[eq.weapon].name):'UNARMED'}</span><span>${pet?escapeHtml(pet.name):'SOLO'}</span></div></div>
+  return `<section class="hero-stage ${compact?'compact':''}"><div class="hero-canvas-frame"><div class="stage-upper"><span>CHARACTER // 001</span><span class="stage-live">● ACTIVE</span></div>${devMode?'<span class="hero-dev-tag">DEV PREVIEW</span>':''}<canvas id="hero-canvas" width="240" height="320" aria-label="Human-proportioned pixel-art hero. Health affects muscle definition, Stamina affects energy, and Focus affects concentration. Owned companions may appear beside the hero."></canvas><div class="stage-bottom"><span>PERSONAL GROWTH</span><span>${pet?escapeHtml(pet.name):'SOLO'}</span></div></div>
   <div class="stage-attributes"><span>♥ ${stats.health.level}</span><span>ϟ ${stats.stamina.level}</span><span>◉ ${stats.focus.level}</span></div></section>`;
 }
 function renderActivity(){
@@ -1943,40 +1994,34 @@ function inventoryCard(id){
   return `<button class="inventory-card ${equipped?'equipped':''}" data-action="toggle-equip" data-id="${id}"><canvas data-item="${id}" width="88" height="88" aria-hidden="true"></canvas><span><strong>${escapeHtml(item.name)}</strong><small class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name} · ${item.type}</small></span><em>${equipped?'EQUIPPED':'EQUIP'}</em></button>`;
 }
 function renderHero(){
-  return `<p class="eyebrow">CHARACTER // EQUIPMENT</p><h1 class="page-title">HERO.</h1>${devMode?'<div class="dev-banner">DEV PREVIEW ACTIVE · Try every item free in the Store. Your real equipment is unchanged.</div>':''}${heroStage()}<div class="section-heading"><h2>EQUIPPED</h2></div><div class="equip-grid">${HERO_SLOTS.map(slotCard).join('')}</div><div class="section-heading"><h2>INVENTORY</h2><span class="section-aside">${state.hero.owned.length} ITEMS</span></div><div class="hero-inventory">${state.hero.owned.length?state.hero.owned.map(inventoryCard).join(''):'<div class="empty-state">EMPTY INVENTORY</div>'}</div>`;
-}
-function catalogCard(item){
-  const owned=state.hero.owned.includes(item.id),equipped=activeEquipment()[item.type]===item.id;
-  const disabled=!devMode&&!owned&&state.wallet<item.cost;
-  const label=item.baseKey==='handaxe'?'Handaxe · Thrown':item.group;
-  return `<article class="catalog-card rarity-${item.rarity}"><div class="catalog-art"><canvas data-item="${item.id}" width="88" height="88" aria-label="Pixel-art ${escapeHtml(item.baseName||item.shape)}"></canvas></div><div class="catalog-info"><div class="catalog-name">${escapeHtml(item.name)}</div><span class="catalog-type">${escapeHtml(label)}</span><span class="rarity-text ${item.rarity}">${RARITIES[item.rarity].name.toUpperCase()}</span><div class="catalog-price">${amount(item.cost)}</div></div><button class="action-btn catalog-button ${owned?'secondary':''}" data-action="${devMode?'dev-equip':owned?'toggle-equip':'buy-hero'}" data-id="${item.id}" ${disabled?'disabled':''}>${devMode?(equipped?'REMOVE':'TRY ON'):owned?(equipped?'UNEQUIP':'EQUIP'):'BUY'}</button></article>`;
-}
-function catalogResults(){
-  const available=devMode?[...HERO_ITEMS,...LEGACY_ITEMS.map(item=>({...item,group:'Legacy Gear'}))]:HERO_ITEMS;
-  const results=available.filter(item=>item.type===storeFilter&&item.rarity===storeRarity&&
-    `${item.name} ${item.group} ${item.baseName||''} ${item.baseKey==='handaxe'?'throwing axe':''}`.toLowerCase().includes(storeQuery.trim().toLowerCase()));
-  if(!results.length)return '<div class="empty-state">NO MATCHING GEAR</div>';
-  const groups=[...new Set(results.map(item=>item.group))];
-  return groups.map(group=>`<div class="rarity-heading ${storeRarity}"><span>${escapeHtml(group.toUpperCase())}</span><span>${results.filter(item=>item.group===group).length} ITEMS</span></div><section class="catalog-list">${results.filter(item=>item.group===group).map(catalogCard).join('')}</section>`).join('');
+  const companions=state.hero.owned.filter(id=>HERO_INDEX[id]?.type==='companion');
+  return `<p class="eyebrow">CHARACTER // PROGRESSION</p><h1 class="page-title">HERO.</h1>${devMode?'<div class="dev-banner">STAT PREVIEW ACTIVE · Your saved progress is unchanged.</div>':''}${heroStage()}<p class="fine-print">Your character develops through Health, Stamina and Focus. Complete daily sessions to keep progressing.</p>${companions.length?`<div class="section-heading"><h2>COMPANIONS</h2><span class="section-aside">${companions.length} OWNED</span></div><div class="hero-inventory">${companions.map(inventoryCard).join('')}</div>`:''}`;
 }
 function renderShop(){
-  const filters=[['weapon','WEAPONS'],['armor','ARMOR'],['shield','SHIELDS'],['companion','PETS']];
-  return `<p class="eyebrow">HERO ARSENAL</p><h1 class="page-title">STORE.</h1>${devMode?'<div class="dev-banner">TEST MODE · Every item can be tried on for free. No purchase or saved inventory change.</div>':''}<div class="store-balance"><span>YOUR FUNDS</span><strong>${amount(state.wallet)}</strong></div><div class="store-tabs">${filters.map(([key,label])=>`<button class="store-tab ${storeFilter===key?'active':''}" data-action="store-filter" data-value="${key}" aria-pressed="${storeFilter===key}">${label}</button>`).join('')}</div>
-  <div class="rarity-tabs">${Object.keys(RARITIES).map(rarity=>`<button class="rarity-tab ${rarity} ${storeRarity===rarity?'selected':''}" data-action="store-rarity" data-value="${rarity}" aria-pressed="${storeRarity===rarity}">${RARITIES[rarity].name.toUpperCase()}</button>`).join('')}</div>
-  <input id="store-search" class="store-search" type="search" placeholder="SEARCH EQUIPMENT" aria-label="Search equipment" value="${escapeHtml(storeQuery)}" maxlength="50" autocomplete="off">
-  <div id="catalog-results">${catalogResults()}</div>`;
+  const groups=['Leisure','Treats','Splurge Money'];
+  return `<p class="eyebrow">EARN IT. ENJOY IT.</p><h1 class="page-title">REWARDS.</h1>
+    <p class="reward-intro">Turn completed missions into real-life rewards. Every item can be redeemed again whenever you earn enough virtual cash.</p>
+    ${devMode?'<div class="dev-banner">TEST MODE · Preview redemption without spending any cash or creating a claim.</div>':''}
+    <div class="store-balance"><span>AVAILABLE VIRTUAL CASH</span><strong>${amount(state.wallet)}</strong></div>
+    ${groups.map(group=>`<div class="reward-section-title"><span>${escapeHtml(group.toUpperCase())}</span><small>5 REWARDS</small></div><section class="reward-list">${REAL_REWARDS.filter(item=>item.category===group).map(rewardCard).join('')}</section>`).join('')}
+    <p class="reward-footnote">Virtual cash is a personal commitment system, not real money. Splurge allowances mean optional spending from money you've already budgeted. Essential meals, sleep and rest never need to be unlocked.</p>
+    ${state.rewardClaims.length?`<div class="section-heading"><h2>REDEMPTION HISTORY</h2></div><div class="reward-ledger">${state.rewardClaims.slice(0,6).map(claim=>`<div class="reward-ledger-row"><div><strong>${escapeHtml(claim.title)}</strong><small>${formatDate(claim.day)}</small></div><span class="spent">−${amount(claim.cost)}</span></div>`).join('')}</div>`:''}`;
+}
+function rewardCard(item){
+  const affordable=state.wallet>=item.cost;
+  return `<article class="reward-card ${affordable?'affordable':''}"><div class="reward-icon" aria-hidden="true">${item.icon}</div><div class="reward-copy"><strong class="reward-name">${escapeHtml(item.name)}</strong><small class="reward-detail">${escapeHtml(item.detail)}</small></div><div class="reward-card-actions"><span class="reward-price">${amount(item.cost)}</span><button type="button" class="action-btn reward-redeem" data-action="redeem-reward" data-id="${item.id}" ${!affordable&&!devMode?'disabled':''}>${devMode?'TEST':'REDEEM'}</button></div></article>`;
 }
 function renderDevPanel(){
   if(!DEV_TOOLS_ENABLED)return '';
   const stats=activeStats();
   return `<section class="settings-panel"><h2>DEVELOPER TEST MODE</h2>
-    <p class="dev-hint">Temporary testing only. Preview any weapon, armor, shield or companion without buying it, and set levels or quarter meters to test character changes.</p>
+    <p class="dev-hint">Temporary testing only. Set stat levels or quarter meters and preview reward redemptions without spending virtual cash.</p>
     <div class="dev-buttons"><button class="action-btn ${devMode?'danger':''}" data-action="dev-toggle" aria-pressed="${devMode}">${devMode?'TURN TEST MODE OFF':'TURN TEST MODE ON'}</button></div>
-    ${devMode?`<div class="dev-banner">ACTIVE · Your wallet, owned inventory and real levels are safe. Changes vanish when test mode is turned off or the page reloads.</div>
+    ${devMode?`<div class="dev-banner">ACTIVE · Your wallet, reward history and real levels stay unchanged. Test changes vanish when this mode is turned off or the page reloads.</div>
       <div class="dev-stat-row-head"><span>ATTRIBUTE</span><span>LEVEL</span><span>¼ UNITS</span></div>
       <div class="dev-grid">${Object.keys(STATS).map(key=>`<div class="dev-stat-row"><label for="dev-${key}">${STATS[key].name}</label><input id="dev-${key}" data-dev-level="${key}" type="number" inputmode="numeric" min="1" max="999" value="${stats[key].level}" aria-label="${STATS[key].name} preview level"><input data-dev-quarters="${key}" type="number" inputmode="numeric" min="0" max="3" value="${stats[key].quarters}" aria-label="${STATS[key].name} preview quarters"></div>`).join('')}</div>
-      <div class="dev-buttons"><button class="action-btn" data-action="dev-apply">APPLY LEVELS</button><button class="action-btn secondary" data-action="dev-reset">RESET PREVIEW</button><button class="action-btn secondary" data-tab="hero">VIEW HERO</button><button class="action-btn secondary" data-tab="shop">TRY GEAR</button></div>
-      <p class="dev-hint">On the Status page, use +¼ and −¼ to test leveling and the 0/4 → previous level 3/4 decay rule. Each category has one active item.</p>`:''}</section>`;
+      <div class="dev-buttons"><button class="action-btn" data-action="dev-apply">APPLY LEVELS</button><button class="action-btn secondary" data-action="dev-reset">RESET PREVIEW</button><button class="action-btn secondary" data-tab="hero">VIEW HERO</button><button class="action-btn secondary" data-tab="shop">TEST REWARDS</button></div>
+      <p class="dev-hint">On the Status page, use +¼ and −¼ to test leveling and the 0/4 → previous level 3/4 decay rule.</p>`:''}</section>`;
 }
 function renderSettings(){
   const themes=[['acid','NEON'],['sunset','VICE'],['ice','ICE'],['mono','MONO']];
@@ -1985,7 +2030,7 @@ function renderSettings(){
     ${renderDevPanel()}
     <section class="settings-panel"><h2>BACKUPS</h2><div class="settings-buttons"><button class="action-btn" data-action="export">EXPORT</button><button class="action-btn secondary" data-action="import">IMPORT</button></div><p class="fine-print">Progress stays in your browser. Export before clearing Safari data or switching devices.</p></section>
     <section class="settings-panel"><h2>RESET</h2><button class="action-btn danger" data-action="reset">RESET HERO DATA</button></section>
-    <p class="fine-print">HERO VERSION 5.0 · Redesigned equipment art · D&D equipment types · Unofficial fan project.</p>`;
+    <p class="fine-print">HERO VERSION 6.0 · Real-life rewards · Health, Stamina & Focus.</p>`;
 }
 
 function openEditor(){
@@ -2011,17 +2056,24 @@ function claimTask(id){
   state.transactions.length=Math.min(200,state.transactions.length);
   save();render();showToast(`+${amount(task.cash)}`);
 }
-function buyItem(id){
-  if(devMode){toggleEquip(id);return;}
-  const item=HERO_INDEX[id];
-  if(!item||state.hero.owned.includes(id)||state.wallet<item.cost)return;
-  if(!confirm(`Buy ${item.name} for ${amount(item.cost)}?`))return;
-  if(!buyHeroItem(state,id))return;
-  state.transactions.unshift({id:uniqueId('tx'),title:`Purchased: ${item.name}`,amount:-item.cost,day:activeDate});
+function redeemReward(id){
+  const item=REWARD_LOOKUP[id];
+  if(!item)return false;
+  if(devMode&&DEV_TOOLS_ENABLED){showToast(`TEST ONLY: ${item.name.toUpperCase()} · NO CASH SPENT`);return true;}
+  if(state.wallet<item.cost){showToast('NOT ENOUGH VIRTUAL CASH YET');return false;}
+  if(!confirm(`Redeem ${item.name} for ${amount(item.cost)} virtual cash?`))return false;
+  // Recheck after confirmation before committing the transaction.
+  if(state.wallet<item.cost)return false;
+  state.wallet-=item.cost;
+  state.rewardClaims.unshift({rewardId:id,title:item.name,cost:item.cost,day:activeDate,at:new Date().toISOString()});
+  state.rewardClaims.length=Math.min(200,state.rewardClaims.length);
+  state.transactions.unshift({id:uniqueId('tx'),title:`Redeemed: ${item.name}`,amount:-item.cost,day:activeDate});
   state.transactions.length=Math.min(200,state.transactions.length);
-  save();render();showToast(`${item.name.toUpperCase()} EQUIPPED`);
+  save();render();showToast(`${item.name.toUpperCase()} REDEEMED`);
+  return true;
 }
 function toggleEquip(id){
+  if(HERO_INDEX[id]?.type!=='companion')return;
   if(devMode){
     const item=HERO_INDEX[id];if(!item||!devPreview)return;
     devPreview.equipped[item.type]=devPreview.equipped[item.type]===id?null:id;
@@ -2074,30 +2126,19 @@ document.addEventListener('click',event=>{
     case 'log-stat':changeStat(id);break;
     case 'undo-stat':changeStat(id,true);break;
     case 'claim-task':claimTask(id);break;
-    case 'buy-hero':buyItem(id);break;
-    case 'dev-equip':if(DEV_TOOLS_ENABLED&&devMode)toggleEquip(id);break;
+    case 'redeem-reward':redeemReward(id);break;
     case 'toggle-equip':toggleEquip(id);break;
-    case 'unequip':if(devMode){if(DEV_TOOLS_ENABLED&&devPreview&&unequipHeroSlot({equipped:devPreview.equipped},id)){render();showToast('TEST ITEM REMOVED');}}else if(unequipHeroSlot(state.hero,id)){save();render();showToast('UNEQUIPPED');}break;
     case 'dev-toggle':toggleDevMode();break;
     case 'dev-apply':applyDevStats();break;
     case 'dev-step':adjustDevStat(id,Number(button.dataset.delta)>0?1:-1);break;
     case 'dev-reset':if(DEV_TOOLS_ENABLED&&devMode){devPreview=freshDevPreview();render();showToast('PREVIEW RESET');}break;
-    case 'store-filter':storeFilter=value;render();break;
-    case 'store-rarity':storeRarity=value;render();break;
     case 'set-theme':state.theme=value;save();render();break;
     case 'remove-task':if(confirm('Remove this task?')){state.tasks=state.tasks.filter(t=>t.id!==id);save();render();}break;
     case 'close-modal':dialog.close();break;
     case 'export':exportBackup();break;
     case 'import':importFile.click();break;
-    case 'reset':if(confirm('Reset hero stats, missions, funds and equipment? Your original home version is unaffected.')){state=initialState(activeDate);devMode=false;devPreview=null;save();render();showToast('HERO RESET');}break;
+    case 'reset':if(confirm('Reset hero stats, missions, virtual cash and reward history? Your original home version is unaffected.')){state=initialState(activeDate);devMode=false;devPreview=null;save();render();showToast('HERO RESET');}break;
   }
-});
-document.addEventListener('input',event=>{
-  if(event.target.id!=='store-search')return;
-  storeQuery=event.target.value;
-  const list=document.getElementById('catalog-results');if(!list)return;
-  list.innerHTML=catalogResults();
-  list.querySelectorAll('canvas[data-item]').forEach(canvas=>drawItemIcon(canvas,HERO_INDEX[canvas.dataset.item]));
 });
 
 dialog.addEventListener('submit',event=>{
