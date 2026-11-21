@@ -810,6 +810,9 @@ function drawStageCompanion(c,item){
   }
   if(!flying){paint(c,17,284,64,2,'#201723');paint(c,25,286,48,2,'#493448');}
 }
+function heroArmorHasCape(item){
+  return !!item&&(['cloak','mantle','regent'].includes(item.shape)||item.rarity==='legendary'&&['plate','carapace','aegis'].includes(item.shape));
+}
 
 function drawSpriteHero(c,stats,armor,weapon,shield,pet){
   const atlas=loadedAtlas('hero-health-atlas');
@@ -827,26 +830,26 @@ function drawSpriteHero(c,stats,armor,weapon,shield,pet){
   // Low Stamina hunches the same body sprite forward; each stamina level reduces the lean.
   c.translate(127,274);c.transform(1,0,-.16*(1-s),1,0,0);c.translate(-127,-274);
   c.translate(129,0);c.scale(scaleX,1);c.translate(-129,0);
-  if(armor&&(['epic','legendary'].includes(armor.rarity)||['cloak','mantle','regent'].includes(armor.shape)))cloak(c,armor,s,visualPower(health));
+  if(heroArmorHasCape(armor))cloak(c,armor,s,visualPower(health));
   const w=atlas.naturalWidth/2,h=atlas.naturalHeight/2;
   c.drawImage(atlas,(stage%2)*w,Math.floor(stage/2)*h,w,h,(stage%2)*40,28+7*(1-s),240,257-7*(1-s));
   drawFocusFace(c,stats.focus.level,stage);
-  if(armor)drawArmor(c,armor,129,105,27+Math.round(visualPower(health)*7),20);
+  if(armor)drawArmorV5(c,armor,129,105,27+Math.round(visualPower(health)*7),20,true);
   if(shield){
-    drawShield(c,shield,88,148,.94);
+    drawShieldV5(c,shield,88,148,.94);
     // Left fingers grip the inner edge of the shield.
     paint(c,105,175,6,7,SKIN_SHADOW);paint(c,105,176,4,4,SKIN_LIGHT);
   }
   if(weapon){
     // Grip is anchored at the sprite's right wrist (not in the backdrop).
     const handX=[153,155,161,166][stage]+Math.round(stagePct),handY=177+Math.round((1-s)*3);
-    drawWeapon(c,weapon,handX,handY);
+    drawWeaponV5(c,weapon,handX,handY);
     // Overlay the fingers last: the handle visibly passes through the fist.
     outlined(c,[[handX-7,handY-5],[handX+2,handY-6],[handX+7,handY-1],[handX+5,handY+7],[handX-5,handY+7],[handX-8,handY+2]],SKIN_SHADOW,2);
     paint(c,handX-5,handY-4,9,4,SKIN_LIGHT);
     paint(c,handX-3,handY+1,8,3,SKIN);
   }
-  if(armor&&(['plate','halfplate','splint','aegis','regent'].includes(armor.shape)||armor.group==='Heavy Armor'&&armor.rarity==='legendary'))drawHelmet(c,[151,130,137,134][stage],61,armor);
+  if(armor&&(['plate','halfplate','splint','aegis','regent'].includes(armor.shape)||armor.group==='Heavy Armor'&&armor.rarity==='legendary'))drawHelmetV5(c,[151,130,137,134][stage],61,armor);
   c.restore();
   drawStaminaProgress(c,stats.stamina.level);
   drawFocusProgress(c,stats.focus.level);
@@ -862,7 +865,7 @@ function drawHero(canvas,stats,equipment) {
   const weapon=HERO_INDEX[equipment.weapon],armor=HERO_INDEX[equipment.armor],pet=HERO_INDEX[equipment.companion],shield=HERO_INDEX[equipment.shield];
   if(drawSpriteHero(c,stats,armor,weapon,shield,pet))return canvas;
   backdrop(c,h,s,f);
-  if(armor && (armor.rarity==='legendary'||armor.rarity==='epic'||['cloak','mantle','regent'].includes(armor.shape))) cloak(c,armor,s,h);
+  if(heroArmorHasCape(armor))cloak(c,armor,s,h);
   if(pet) drawStageCompanion(c,pet);
   drawCharacter(c,h,s,f,armor,weapon,shield);
   return canvas;
@@ -951,20 +954,20 @@ function drawCharacter(c,h,s,f,armor,weapon,shield) {
   outlined(c,[[left+6,top+6],[left-3,top+11],[left-8,top+34],[left-5,top+57],[left-2,top+61],[left+5,top+56],[left+6,top+38],[left+arm,top+12]],SKIN_SHADOW);
   poly(c,[[left+4,top+9],[left,top+12],[left-5,top+36],[left-2,top+54],[left+3,top+54],[left+4,top+35]],SKIN_LIGHT);
   // Weapon is held between the front hand and forearm, never floating at the side.
-  if(weapon) drawWeapon(c,weapon,handX,top+65);
+  if(weapon) drawWeaponV5(c,weapon,handX,top+65);
   outlined(c,[[right-7,top+6],[right+4,top+10],[right+arm+4,top+30],[right+arm+6,top+53],[right+arm+2,top+67],[right+arm-6,top+67],[right+arm-6,top+48],[right+2,top+27]],SKIN_SHADOW);
   poly(c,[[right-3,top+9],[right+5,top+13],[right+arm,top+34],[right+arm+2,top+53],[right+arm-3,top+56],[right+arm-7,top+36]],SKIN_LIGHT);
   if(h>.45){
     line(c,left-5,top+33,4,14,'#b47b5c');line(c,right+arm,top+32,5,13,'#b47b5c');
   }
-  if(armor) drawArmor(c,armor,cx,top,shoulder,waist);
-  if(shield) drawShield(c,shield,left-5,top+39,1);
+  if(armor) drawArmorV5(c,armor,cx,top,shoulder,waist,true);
+  if(shield) drawShieldV5(c,shield,left-5,top+39,1);
   // Fingers wrap around the grip after the weapon is painted.
   poly(c,[[handX-7,top+59],[handX+3,top+59],[handX+7,top+65],[handX+3,top+75],[handX-4,top+76],[handX-8,top+70]],SKIN_SHADOW);
   line(c,handX-3,top+63,10,6,SKIN_LIGHT);
   line(c,handX+1,top+66,5,3,'#ca9175');
   drawHead(c,cx,51+slouch,f);
-  if(armor && armor.group==='Heavy Armor' && ['epic','legendary'].includes(armor.rarity)) drawHelmet(c,cx,52+slouch,armor);
+  if(armor && armor.group==='Heavy Armor' && ['epic','legendary'].includes(armor.rarity)) drawHelmetV5(c,cx,52+slouch,armor);
 }
 
 function drawHead(c,cx,y,f) {
@@ -1291,6 +1294,506 @@ function drawPet(c,item,x,y,size=1){
   c.restore();
 }
 
+// V5 EQUIPMENT ART: handcrafted silhouettes instead of palette-swapped icons.
+// All dimensions are local canvas units; the same artwork is used for icons
+// and full-size equipment, while the hero passes anatomically anchored grips.
+const GEAR_MATERIALS={
+  basic:{metal:'#929aa2',metalDark:'#535b66',light:'#d8d4c9',wood:'#78553d',grain:'#a7815e',leather:'#634538',cloth:'#8f786b',trim:'#b3966b',accent:'#765149',gem:'#d1aa78'},
+  rare:{metal:'#7caebc',metalDark:'#355c73',light:'#e0eff0',wood:'#6b5041',grain:'#bd9b76',leather:'#3c5b6d',cloth:'#3c7488',trim:'#dbbd83',accent:'#348a9d',gem:'#9ce3ed'},
+  epic:{metal:'#9d94bf',metalDark:'#54446f',light:'#eee1ff',wood:'#51445f',grain:'#9883ae',leather:'#493d68',cloth:'#66528e',trim:'#c8aee8',accent:'#816bc4',gem:'#d9bafa'},
+  legendary:{metal:'#e3b567',metalDark:'#855134',light:'#fff1c7',wood:'#754839',grain:'#d09b61',leather:'#713d42',cloth:'#a94947',trim:'#ffe4a0',accent:'#d66a48',gem:'#fff0ad'},
+};
+function gearPalette(item){return GEAR_MATERIALS[item.rarity]||GEAR_MATERIALS.basic;}
+function gearGem(c,x,y,p,size=5){
+  outlined(c,[[x,y-size],[x+size,y],[x,y+size],[x-size,y]],p.metalDark,2);
+  poly(c,[[x,y-size+1],[x+size-2,y],[x,y+size-2],[x-size+2,y]],p.gem);
+  paint(c,x-1,y-size+2,2,3,p.light);
+}
+function gearEtching(c,rarity,x,y,p){
+  if(rarity==='basic'){
+    paint(c,x-3,y,2,2,p.metalDark);paint(c,x+3,y+2,2,2,p.grain);
+  }else if(rarity==='rare'){
+    paint(c,x-9,y-4,2,9,p.trim);paint(c,x+7,y-4,2,9,p.trim);
+    paint(c,x-6,y-6,12,2,p.light);
+  }else if(rarity==='epic'){
+    outlined(c,[[x-7,y-7],[x,y-1],[x+7,y-7],[x,y+8]],p.trim,1);
+    paint(c,x-1,y-1,3,7,p.metalDark);
+    paint(c,x-3,y+2,7,2,p.gem);
+  }else{
+    for(const direction of [-1,1]){
+      poly(c,[[x+direction*3,y-6],[x+direction*13,y-10],[x+direction*8,y],[x+direction*12,y+7],[x+direction*3,y+3]],p.trim);
+    }
+    gearGem(c,x,y,p,4);
+  }
+}
+function drawShieldV5(c,item,x,y,scale=1){
+  c.save();c.translate(x,y);c.scale(scale,scale);
+  const p=gearPalette(item),rank=item.rarity;
+  if(rank==='basic'){
+    // A bound wooden roundshield, complete with planks, grain and iron boss.
+    outlined(c,[[-21,-17],[-9,-27],[10,-27],[22,-17],[25,0],[18,21],[3,31],[-13,25],[-24,8]],p.leather,4);
+    outlined(c,[[-20,-15],[-7,-23],[9,-23],[19,-14],[21,1],[15,19],[2,26],[-12,21],[-21,7]],p.wood,2);
+    for(const xx of [-12,-3,6,15]){
+      paint(c,xx,-20,2,40,p.grain);paint(c,xx+4,-13,1,28,p.metalDark);
+    }
+    for(const [a,b] of [[-17,-8],[16,-8],[-14,14],[13,15],[-1,-21]])paint(c,a,b,3,3,p.trim);
+    outlined(c,[[-7,-7],[5,-7],[10,2],[3,12],[-8,9],[-12,1]],p.metalDark,3);
+    poly(c,[[-6,-4],[4,-4],[6,2],[2,9],[-5,7]],p.metal);
+    paint(c,-4,-4,6,2,p.light);
+  }else if(rank==='rare'){
+    // Long kite shield with beveled steel, riveted brass and heraldic wave.
+    outlined(c,[[-17,-28],[13,-28],[23,-14],[21,14],[6,43],[-5,35],[-23,10],[-23,-15]],p.metalDark,5);
+    outlined(c,[[-15,-25],[12,-25],[19,-12],[17,12],[5,37],[-4,30],[-19,9],[-19,-14]],p.trim,2);
+    outlined(c,[[-12,-21],[9,-21],[15,-10],[13,10],[4,30],[-2,24],[-15,6],[-15,-12]],p.metalDark,2);
+    poly(c,[[-10,-19],[8,-19],[12,-9],[9,5],[-9,5]],p.metal);
+    poly(c,[[-9,8],[10,8],[3,28]],p.accent);
+    outlined(c,[[-10,-3],[-1,-12],[8,-3],[2,3],[-2,16],[-8,6]],p.light,2);
+    paint(c,-7,-1,4,5,p.accent);paint(c,3,-4,4,5,p.accent);
+    for(const [a,b] of [[-12,-16],[12,-16],[-15,4],[12,4],[2,28]])paint(c,a,b,3,3,p.trim);
+  }else if(rank==='epic'){
+    // Eight-faceted ward shield with etched edges and a cut-stone center.
+    outlined(c,[[-11,-29],[12,-29],[25,-15],[26,16],[10,37],[-7,37],[-25,14],[-25,-15]],p.metalDark,5);
+    outlined(c,[[-10,-26],[11,-26],[22,-13],[22,14],[8,33],[-6,33],[-21,12],[-21,-13]],p.trim,3);
+    outlined(c,[[-8,-22],[9,-22],[17,-10],[18,10],[7,27],[-5,27],[-17,9],[-17,-10]],p.metal,2);
+    for(const side of [-1,1]){
+      poly(c,[[side*4,-16],[side*14,-8],[side*10,9],[side*3,17]],p.metalDark);
+      paint(c,side*10-1,-10,3,8,p.light);
+      paint(c,side*10-1,7,3,5,p.trim);
+    }
+    gearGem(c,0,1,p,11);
+    paint(c,-3,-19,7,3,p.trim);paint(c,-3,24,7,3,p.trim);
+  }else{
+    // Golden royal tower shield: sculpted crown, sun crest and layered wings.
+    outlined(c,[[-19,-30],[-10,-37],[0,-32],[11,-37],[20,-29],[23,21],[10,38],[0,44],[-11,38],[-23,20]],p.metalDark,5);
+    outlined(c,[[-17,-27],[-9,-32],[0,-28],[10,-32],[17,-27],[19,18],[8,34],[0,39],[-9,34],[-19,18]],p.trim,3);
+    outlined(c,[[-14,-24],[13,-24],[14,15],[4,31],[-4,31],[-14,15]],p.leather,2);
+    poly(c,[[-11,-21],[-1,-24],[-1,25],[-10,14]],p.accent);
+    poly(c,[[2,-24],[11,-20],[10,14],[2,25]],'#a65a42');
+    for(const side of [-1,1]){
+      outlined(c,[[side*3,-5],[side*13,-15],[side*10,-2],[side*16,8],[side*4,5]],p.trim,2);
+      paint(c,side*12-1,-19,3,5,p.light);
+    }
+    outlined(c,[[-7,0],[0,-10],[7,0],[3,13],[-3,13]],p.trim,2);
+    gearGem(c,0,0,p,5);
+    for(const point of [[-15,-18],[15,-18],[-15,14],[15,14],[0,31]])paint(c,point[0]-1,point[1]-1,3,3,p.light);
+  }
+  // A covered forearm strap exits toward the character's left-hand fingers.
+  paint(c,17,16,6,6,p.leather);paint(c,19,18,3,3,p.trim);
+  c.restore();
+}
+
+function drawArmorV5(c,item,cx,top,shoulder,waist,fullBody=false){
+  const p=gearPalette(item),sh=item.shape,rank=item.rarity;
+  const light=['wraps','padded','leather','studded','hide','cloak','mantle'].includes(sh);
+  const chain=['chain','chain-shirt','chain-mail','mail','ring'].includes(sh);
+  const heavy=['plate','splint','chain-mail','ring','regent','aegis'].includes(sh)||item.group==='Heavy Armor';
+  const solid=['breastplate','halfplate','splint','plate','carapace','aegis','regent'].includes(sh);
+  const leather=light? p.leather:p.metalDark;
+  const torso=light?p.leather:chain?p.metalDark:p.metal;
+  c.save();c.translate(cx,top);
+  // Anatomical construction: neck opening, sloped shoulders, tapered ribs.
+  outlined(c,[[-shoulder+7,7],[-shoulder+12,1],[-10,2],[0,12],[10,2],[shoulder-12,1],[shoulder-7,7],[waist+4,59],[waist,66],[-waist,66],[-waist-4,59]],torso,3);
+  poly(c,[[-shoulder+10,10],[-10,6],[0,15],[-2,58],[-waist+3,61],[-waist-4,45]],light?p.grain:p.metal);
+  poly(c,[[10,6],[shoulder-10,10],[waist+4,45],[waist-3,61],[2,58],[0,15]],light?p.leather:p.metalDark);
+  // Collar and flexible dark joints prevent gear from looking painted on skin.
+  outlined(c,[[-12,2],[-7,0],[0,11],[7,0],[12,2],[9,13],[0,19],[-9,13]],p.metalDark,2);
+  paint(c,-8,9,16,3,light?p.cloth:p.trim);
+  line(c,-waist,59,waist*2,6,p.leather);
+  paint(c,-waist+1,60,waist*2-2,2,p.trim);
+  outlined(c,[[-5,57],[5,57],[6,67],[-5,67]],p.metalDark,2);
+  paint(c,-3,59,6,5,p.trim);
+
+  if(['wraps','padded'].includes(sh)){
+    if(sh==='wraps'){
+      for(let row=0;row<5;row++){
+        poly(c,[[-19,17+row*9],[17,13+row*9],[20,18+row*9],[-16,22+row*9]],row%2?p.grain:'#cfb69e');
+        paint(c,-15,20+row*9,27,1,p.metalDark);
+      }
+    }else{
+      for(let row=0;row<5;row++)for(let col=0;col<5;col++){
+        const x=-16+col*8,y=18+row*8;
+        outlined(c,[[x,y-3],[x+4,y],[x,y+4],[x-4,y]],row%2?p.grain:p.cloth,1);
+      }
+      line(c,-16,18,3,35,p.trim);line(c,13,18,3,35,p.trim);
+    }
+  }else if(['leather','studded','hide','cloak','mantle'].includes(sh)){
+    // The leather items read as tailored jerkins; cloaks have draped lapels.
+    outlined(c,[[-17,15],[-9,10],[-1,22],[-3,52],[-17,49]],p.grain,2);
+    outlined(c,[[9,10],[17,15],[17,49],[3,52],[1,22]],p.leather,2);
+    line(c,-5,22,3,31,p.trim);line(c,4,21,2,34,p.metalDark);
+    if(sh==='studded')for(let row=0;row<4;row++)for(const xx of [-13,12]){
+      paint(c,xx,20+row*8,3,3,p.metal);paint(c,xx+1,20+row*8,1,1,p.light);
+    }
+    if(sh==='hide'){
+      for(let i=0;i<7;i++)poly(c,[[-22+i*7,53],[-18+i*7,63],[-14+i*7,52]],i%2?p.grain:'#ddbd88');
+      for(const xx of [-22,17])paint(c,xx,14,7,13,'#d8c09e');
+    }
+    if(['cloak','mantle'].includes(sh)){
+      for(const side of [-1,1]){
+        outlined(c,[[side*7,3],[side*(shoulder-1),6],[side*21,35],[side*8,57]],p.cloth,3);
+        paint(c,side*18-1,12,3,32,p.trim);
+      }
+      gearGem(c,0,13,p,4);
+    }
+  }else if(chain||sh==='scale'){
+    // Chain rings and overlapping scales are separate visible materials.
+    for(let row=0;row<5;row++)for(let col=0;col<6;col++){
+      const x=-17+col*7+(row%2?3:0),y=20+row*7;
+      if(sh==='scale'){
+        outlined(c,[[x-3,y-4],[x+3,y-4],[x+4,y+1],[x,y+5],[x-4,y+1]],(row+col)%2?p.metal:p.light,1);
+        paint(c,x-1,y-3,2,4,p.metalDark);
+      }else{
+        paint(c,x-3,y-3,6,6,p.metal);
+        paint(c,x-1,y-1,3,3,p.metalDark);
+        paint(c,x+1,y-3,2,2,p.light);
+      }
+    }
+    if(sh==='ring')for(let i=0;i<4;i++){
+      outlined(c,[[-13,22+i*9],[-8,19+i*9],[-3,22+i*9],[-8,27+i*9]],p.trim,1);
+      outlined(c,[[3,22+i*9],[8,19+i*9],[13,22+i*9],[8,27+i*9]],p.trim,1);
+    }
+  }
+
+  if(solid){
+    // Segmented cuirass; distinct from cloth, mail and studded armor.
+    outlined(c,[[-18,17],[-3,20],[0,27],[3,20],[18,17],[15,44],[0,53],[-15,44]],p.metalDark,3);
+    outlined(c,[[-15,18],[-3,23],[0,30],[3,23],[15,18],[12,41],[0,47],[-12,41]],p.metal,2);
+    poly(c,[[-12,20],[-3,25],[-2,42],[-10,39]],p.light);
+    poly(c,[[4,25],[12,20],[10,39],[3,43]],p.metalDark);
+    if(sh==='splint')for(let x=-14;x<=14;x+=7){
+      outlined(c,[[x-2,27],[x+2,27],[x+3,53],[x-3,53]],p.metal,2);
+      paint(c,x-1,29,2,21,p.light);
+    }
+    if(sh==='carapace')for(let i=0;i<3;i++){
+      outlined(c,[[-16,31+i*7],[0,36+i*7],[16,31+i*7]],p.trim,2);
+    }
+    if(['plate','aegis','regent'].includes(sh)){
+      for(let i=0;i<3;i++){
+        outlined(c,[[-17+i*2,50+i*7],[0,57+i*7],[17-i*2,50+i*7]],p.metalDark,2);
+        line(c,-9+i*2,54+i*7,18-i*4,2,p.trim);
+      }
+    }
+  }
+
+  // Shoulder pieces and articulated forearms actually track the upper arms.
+  if(!light||sh==='studded'||sh==='hide')for(const side of [-1,1]){
+    const a=shoulder;
+    outlined(c,[[side*(a-12),3],[side*(a-2),-3],[side*(a+8),5],[side*(a+9),18],[side*(a-9),21],[side*(a-15),12]],solid?p.metal:p.metalDark,3);
+    poly(c,[[side*(a-11),5],[side*a,1],[side*(a+5),8],[side*(a-10),11]],p.light);
+    line(c,side*(a+1)-2,12,4,3,p.trim);
+    if(heavy||sh==='halfplate'||sh==='carapace'){
+      outlined(c,[[side*(a+2),32],[side*(a+11),35],[side*(a+10),52],[side*a,57]],p.metalDark,3);
+      line(c,side*(a+5)-2,39,4,13,p.metal);
+      paint(c,side*(a+6)-1,37,3,3,p.trim);
+    }
+  }
+  if(heavy||sh==='halfplate')for(const side of [-1,1]){
+    outlined(c,[[side*8,66],[side*22,67],[side*24,90],[side*10,85]],p.metalDark,3);
+    poly(c,[[side*10,69],[side*19,70],[side*19,84],[side*12,82]],p.metal);
+    line(c,side*13-2,72,4,12,p.light);
+    if(fullBody){
+      const shinY=213-top;
+      outlined(c,[[side*11,shinY],[side*22,shinY-3],[side*24,shinY+26],[side*14,shinY+31],[side*10,shinY+23]],p.metalDark,3);
+      poly(c,[[side*14,shinY+1],[side*20,shinY],[side*21,shinY+22],[side*16,shinY+26]],p.metal);
+      line(c,side*17-2,shinY+6,3,14,p.light);
+    }
+  }
+  // Craftsmanship is conveyed by fitted precious metal, studs, and engraving.
+  if(rank==='basic'){
+    for(const xx of [-12,12]){paint(c,xx,15,3,3,p.trim);paint(c,xx,48,3,3,p.trim);}
+  }else{
+    gearEtching(c,rank,0,35,p);
+    for(const xx of [-17,14]){paint(c,xx,14,3,4,p.trim);paint(c,xx,49,3,3,p.trim);}
+    if(rank==='legendary'){
+      outlined(c,[[-11,25],[0,17],[11,25],[8,33],[0,26],[-8,33]],p.trim,2);
+      paint(c,-2,20,4,7,p.light);
+    }
+  }
+  c.restore();
+}
+
+function drawHelmetV5(c,x,y,item){
+  const p=gearPalette(item),sh=item.shape,rank=item.rarity;
+  c.save();c.translate(x,y);
+  // The face-opening follows the correct head anchor for each health sprite.
+  const crown=sh==='regent'||sh==='aegis';
+  outlined(c,[[-20,3],[-19,-12],[-11,-20],[0,-24],[12,-20],[20,-11],[21,8],[17,24],[-17,24]],p.metalDark,3);
+  poly(c,[[-16,-9],[-9,-17],[0,-21],[0,4],[-18,8]],p.metal);
+  poly(c,[[1,-21],[11,-17],[17,-9],[18,8],[2,4]],p.light);
+  if(sh==='halfplate'||sh==='splint'){
+    outlined(c,[[-18,7],[-13,1],[13,1],[18,7],[15,13],[-15,13]],p.trim,2);
+    outlined(c,[[-17,8],[-11,10],[-11,25],[-18,23]],p.metal,2);
+    outlined(c,[[17,8],[11,10],[11,25],[18,23]],p.metal,2);
+  }else{
+    outlined(c,[[-17,5],[17,5],[16,24],[8,29],[-8,29],[-16,24]],p.metal,2);
+    paint(c,-14,11,28,6,p.metalDark);
+    paint(c,-11,13,9,2,p.light);paint(c,3,13,9,2,p.light);
+    outlined(c,[[-5,8],[5,8],[4,28],[-3,30]],p.trim,2);
+  }
+  if(crown){
+    outlined(c,[[-17,-16],[-21,-28],[-11,-24],[0,-35],[11,-24],[22,-29],[17,-15]],p.trim,3);
+    gearGem(c,0,-18,p,5);
+  }else if(rank==='epic'||rank==='legendary'){
+    gearEtching(c,rank,0,-9,p);
+    if(rank==='legendary')paint(c,-3,-26,6,5,p.trim);
+  }else{
+    paint(c,-14,-9,4,3,p.trim);paint(c,11,-9,4,3,p.trim);
+  }
+  c.restore();
+}
+
+function weaponPole(c,top,bottom,p,width=7,metal=false){
+  const half=width/2;
+  outlined(c,[[-half,top],[half,top],[half,bottom],[-half,bottom]],metal?p.metalDark:p.wood,2);
+  paint(c,-half+1,top+3,2,bottom-top-5,metal?p.light:p.grain);
+  for(const yy of [-5,1,7])if(yy>=top&&yy+3<bottom){
+    paint(c,-half-1,yy,width+2,3,p.leather);
+    paint(c,half,yy,2,3,p.trim);
+  }
+  paint(c,-half+1,bottom-3,width-2,3,p.trim);
+}
+function weaponMetalBlade(c,length,width,p,rarity,curve=false){
+  const end=-12-length;
+  if(curve){
+    outlined(c,[[-width,-12],[width-2,-12],[width+14,end+28],[width+14,end+12],[width+5,end],[-width+1,end+12],[-width+3,end+30]],p.metal,3);
+    poly(c,[[width-2,-15],[width+10,end+26],[width+10,end+12],[width+5,end+5],[2,-26]],p.light);
+    poly(c,[[-width+2,-20],[-width+3,end+23],[width+4,end+7],[0,-18]],p.metalDark);
+  }else{
+    outlined(c,[[-width,-12],[-width+2,end+16],[0,end],[width-2,end+16],[width,-12]],p.metalDark,3);
+    poly(c,[[-width+1,-15],[-width+3,end+15],[0,end+4],[0,-15]],p.metal);
+    poly(c,[[0,end+4],[width-3,end+15],[width-1,-15],[0,-15]],p.light);
+    paint(c,-1,end+19,2,length-30,p.trim);
+  }
+  if(rarity==='epic'){
+    for(const yy of [end+31,end+50,end+69])if(yy<-24){
+      outlined(c,[[-3,yy-5],[2,yy],[-3,yy+5]],p.trim,1);
+    }
+  }else if(rarity==='legendary'){
+    for(const yy of [end+25,end+50,end+75])if(yy<-24){
+      poly(c,[[-width+2,yy],[0,yy-6],[width-2,yy],[0,yy+5]],p.trim);
+      paint(c,-1,yy-3,2,5,p.accent);
+    }
+  }else if(rarity==='rare'){
+    paint(c,-2,end+23,4,Math.max(7,length-34),p.light);
+  }
+}
+function weaponHilt(c,p,rank,wide=false){
+  const span=wide?23:16;
+  outlined(c,[[-span,-12],[span,-12],[span+2,-8],[4,-5],[4,15],[-4,15],[-4,-5],[-span-2,-8]],p.metalDark,2);
+  paint(c,-span,-11,span*2,3,p.trim);
+  for(const xx of [-span,span-3])paint(c,xx,-12,3,6,p.light);
+  weaponPole(c,-4,18,p,7);
+  outlined(c,[[-8,18],[8,18],[9,23],[-9,23]],p.metalDark,2);
+  gearGem(c,0,-9,p,rank==='legendary'?4:rank==='epic'?3:2);
+}
+function drawWeaponV5(c,item,x,gripY){
+  const p=gearPalette(item),rank=item.rarity;
+  const key=item.baseKey||item.shape;
+  c.save();c.translate(x,gripY);
+  // Angle large weapons outward from the wrist. Their heads and blades remain
+  // beside the face instead of crossing the hair or hiding the eyes.
+  if(!['pistol','sling'].includes(key)){
+    const bulky=['club','greatclub','mace','morningstar','hammer','light-hammer','warhammer','maul','flail','pick','war-pick','axe','handaxe','battleaxe','greataxe'].includes(key);
+    c.transform(1,0,bulky?-.28:-.12,1,0,0);
+  }
+  const swords=['dagger','shortsword','longsword','greatsword','rapier','scimitar','sword','saber','starblade'];
+  const blades=['spear','javelin','pike','lance','dart','trident','glaive','halberd'];
+  const blunt=['club','greatclub','mace','morningstar','hammer','light-hammer','warhammer','maul','flail','pick','war-pick','axe','handaxe','battleaxe','greataxe'];
+  if(swords.includes(key)){
+    const length={dagger:47,shortsword:70,longsword:94,greatsword:120,rapier:111,scimitar:95,sword:88,saber:97,starblade:115}[key]||87;
+    const width={dagger:6,shortsword:7,longsword:9,greatsword:14,rapier:3,scimitar:9,sword:9,saber:8,starblade:13}[key]||8;
+    weaponMetalBlade(c,length,width,p,rank,['scimitar','saber'].includes(key));
+    if(key==='rapier'){
+      outlined(c,[[-10,-10],[-19,-21],[-15,-38],[0,-43],[15,-38],[19,-21],[10,-10]],p.trim,2);
+      paint(c,-15,-23,4,12,p.light);paint(c,12,-23,4,12,p.light);
+      outlined(c,[[-9,-11],[0,-19],[9,-11]],p.metalDark,2);
+    }else if(key==='dagger'){
+      outlined(c,[[-14,-13],[-4,-20],[5,-20],[15,-13],[7,-8],[-7,-8]],p.trim,2);
+    }else if(key==='greatsword'||key==='starblade'){
+      outlined(c,[[-24,-12],[-17,-22],[-10,-14],[10,-14],[17,-22],[24,-12],[9,-7],[-9,-7]],p.trim,3);
+      if(key==='starblade'){
+        outlined(c,[[-7,-122],[0,-136],[7,-122],[13,-108],[0,-111],[-13,-108]],p.trim,2);
+        gearGem(c,0,-113,p,4);
+      }
+    }else{
+      outlined(c,[[-18,-13],[-14,-18],[-10,-11],[10,-11],[14,-18],[18,-13],[8,-8],[-8,-8]],p.trim,2);
+    }
+    weaponHilt(c,p,rank,key==='greatsword'||key==='starblade');
+  }else if(['shortbow','longbow','bow'].includes(key)){
+    const tall=key==='longbow'?122:key==='shortbow'?91:105;
+    // Laminated recurved bow with separate bowstring, nocks and leather grip.
+    outlined(c,[[8,-tall],[0,-tall+8],[-11,-tall+26],[-17,-68],[-18,-26],[-8,10],[8,23],[3,12],[-10,-27],[-9,-66],[2,-tall+27]],p.wood,3);
+    poly(c,[[5,-tall+3],[0,-tall+15],[-7,-tall+35],[-9,-tall+21]],p.grain);
+    paint(c,6,-tall+1,2,tall+20,p.light);
+    outlined(c,[[-13,-15],[-4,-16],[-1,10],[-12,11]],p.leather,2);
+    paint(c,-11,-10,7,3,p.trim);paint(c,-11,4,7,3,p.trim);
+    poly(c,[[-10,-53],[16,-56],[8,-50],[-10,-49]],p.metalDark);
+    poly(c,[[18,-56],[31,-53],[18,-48]],p.metal);
+    if(rank!=='basic')for(const yy of [-tall+24,-36]){paint(c,-11,yy,4,7,p.trim);paint(c,-8,yy,3,2,p.light);}
+  }else if(['light-crossbow','hand-crossbow','heavy-crossbow','crossbow'].includes(key)){
+    const heavy=key==='heavy-crossbow',small=key==='hand-crossbow';
+    const top=small?-72:heavy?-114:-93,span=heavy?39:small?22:31;
+    weaponPole(c,top,22,p,small?7:10);
+    outlined(c,[[-span,top+11],[-span+7,top-10],[0,top+3],[span-7,top-10],[span,top+11],[span-6,top+15],[0,top+6],[-span+6,top+15]],p.metalDark,3);
+    poly(c,[[-span+7,top+2],[0,top+4],[span-7,top+2],[0,top+9]],p.metal);
+    paint(c,-span+2,top+8,span*2-4,2,p.light);
+    outlined(c,[[-7,top-8],[7,top-8],[9,top+24],[-9,top+24]],p.wood,2);
+    paint(c,-2,top-6,4,30,p.trim);
+    poly(c,[[-5,top+35],[3,top+35],[9,top+44],[1,top+49]],p.metalDark);
+    gearGem(c,0,top+15,p,3);
+  }else if(key==='sling'){
+    weaponPole(c,-17,22,p,5);
+    outlined(c,[[-2,-14],[-16,-38],[-20,-58]],p.leather,2);
+    outlined(c,[[2,-14],[15,-40],[17,-59]],p.leather,2);
+    outlined(c,[[-20,-62],[-9,-67],[15,-64],[20,-56],[12,-48],[-13,-49]],p.wood,2);
+    outlined(c,[[-6,-61],[5,-61],[10,-55],[-9,-54]],p.metalDark,2);
+    paint(c,-3,-59,7,4,p.trim);
+  }else if(blades.includes(key)){
+    const isDart=key==='dart',isPolearm=['glaive','halberd'].includes(key);
+    const tall=({dart:66,javelin:101,spear:112,pike:127,lance:120,trident:109,glaive:124,halberd:122})[key]||110;
+    weaponPole(c,-tall,23,p,isDart?4:7);
+    const tip=-tall-16;
+    outlined(c,[[-7,tip+21],[0,tip],[7,tip+21],[5,tip+37],[-5,tip+37]],p.metalDark,2);
+    poly(c,[[-5,tip+20],[0,tip+4],[0,tip+33],[-4,tip+33]],p.metal);
+    poly(c,[[0,tip+4],[5,tip+20],[4,tip+33],[0,tip+33]],p.light);
+    if(key==='trident')for(const a of [-13,13]){
+      outlined(c,[[a-2,tip+5],[a+2,tip+5],[a+4,tip+35],[a-4,tip+35]],p.metal,2);
+      paint(c,a-1,tip+11,2,18,p.light);
+    }
+    if(isPolearm){
+      outlined(c,[[5,tip+28],[20,tip+14],[27,tip+5],[25,tip+32],[16,tip+48],[4,tip+45]],p.metalDark,3);
+      poly(c,[[7,tip+29],[23,tip+11],[21,tip+30],[14,tip+42]],p.metal);
+      paint(c,17,tip+23,3,14,p.light);
+      if(key==='halberd'){
+        outlined(c,[[-4,tip+37],[-22,tip+50],[-10,tip+50],[-2,tip+44]],p.metal,2);
+      }
+    }
+    if(key==='lance'){
+      outlined(c,[[-7,-38],[9,-44],[15,-26],[4,-24]],p.trim,2);
+      paint(c,-3,-39,5,9,p.light);
+    }
+    if(rank==='legendary'||rank==='epic'){
+      gearEtching(c,rank,0,-tall+48,p);
+      paint(c,-9,-tall+49,18,3,p.trim);
+    }
+  }else if(['quarterstaff','staff'].includes(key)){
+    weaponPole(c,-118,24,p,9);
+    outlined(c,[[-10,-119],[-5,-133],[0,-140],[6,-132],[10,-119],[5,-111],[-5,-111]],p.metalDark,2);
+    gearGem(c,0,-126,p,6);
+    for(const yy of [-88,-63,-35]){
+      paint(c,-5,yy,10,4,p.trim);paint(c,-3,yy+4,7,2,p.metalDark);
+    }
+  }else if(key==='sickle'){
+    weaponPole(c,-72,23,p,7);
+    outlined(c,[[2,-75],[15,-94],[31,-105],[37,-116],[26,-129],[18,-126],[25,-113],[20,-102],[0,-90]],p.metalDark,3);
+    poly(c,[[2,-78],[15,-96],[31,-107],[29,-119],[23,-122],[27,-111],[20,-99],[0,-87]],p.light);
+    paint(c,2,-82,5,11,p.trim);
+  }else if(blunt.includes(key)){
+    const isAxe=['axe','handaxe','battleaxe','greataxe'].includes(key);
+    const isHammer=['hammer','light-hammer','warhammer','maul'].includes(key);
+    const isPick=['pick','war-pick'].includes(key);
+    const isFlail=key==='flail';
+    const isClub=['club','greatclub'].includes(key);
+    const isMace=['mace','morningstar'].includes(key);
+    const large=['greataxe','greatclub','maul'].includes(key);
+    const tall=key==='handaxe'?79:key==='light-hammer'?80:isFlail?76:large?116:102;
+    weaponPole(c,-tall+11,23,p,large?9:7);
+    if(isAxe){
+      outlined(c,[[-4,-tall+10],[-19,-tall-8],[-34,-tall-6],[-28,-tall+19],[-34,-tall+36],[-19,-tall+34],[-4,-tall+22]],p.metalDark,3);
+      poly(c,[[-5,-tall+12],[-22,-tall-3],[-29,-tall],[ -24,-tall+18],[-29,-tall+32],[-20,-tall+31],[-5,-tall+20]],p.metal);
+      line(c,-29,-tall+8,3,22,p.light);
+      if(key==='greataxe'){
+        outlined(c,[[4,-tall+10],[20,-tall-10],[34,-tall-7],[27,-tall+18],[33,-tall+34],[20,-tall+36],[4,-tall+22]],p.metalDark,3);
+        poly(c,[[5,-tall+12],[24,-tall-3],[30,-tall],[24,-tall+18],[29,-tall+30],[20,-tall+31],[5,-tall+20]],p.light);
+      }
+      paint(c,-4,-tall+14,9,4,p.trim);
+    }else if(isHammer){
+      const span=key==='maul'?28:key==='light-hammer'?15:22,headHeight=key==='maul'?28:20;
+      outlined(c,[[-span,-tall-10],[span,-tall-10],[span+3,-tall+headHeight],[-span-3,-tall+headHeight]],p.metalDark,3);
+      outlined(c,[[-span+4,-tall-7],[span-3,-tall-7],[span,-tall+headHeight-3],[-span,-tall+headHeight-3]],p.metal,2);
+      paint(c,-span+6,-tall-5,span*2-12,4,p.light);
+      paint(c,-span+5,-tall+headHeight-8,span*2-10,3,p.trim);
+      for(const xx of [-span+5,span-9])paint(c,xx,-tall+3,4,11,p.light);
+    }else if(isPick){
+      outlined(c,[[-35,-tall-7],[24,-tall-8],[8,-tall+5],[-4,-tall+10]],p.metalDark,3);
+      poly(c,[[-30,-tall-5],[19,-tall-6],[5,-tall+3],[-8,-tall+5]],p.metal);
+      paint(c,-25,-tall-4,32,3,p.light);
+      outlined(c,[[0,-tall+8],[18,-tall+19],[4,-tall+17]],p.trim,2);
+    }else if(isClub){
+      const thick=key==='greatclub'?18:13;
+      outlined(c,[[-thick,-tall-14],[thick,-tall-14],[thick+3,-tall+30],[-thick-3,-tall+30]],p.wood,3);
+      poly(c,[[-thick+3,-tall-10],[-3,-tall-11],[-3,-tall+27],[-thick,-tall+27]],p.grain);
+      for(const yy of [-tall-5,-tall+10,-tall+24]){
+        paint(c,-thick-1,yy,thick*2+2,4,p.leather);
+        for(const xx of [-thick+4,thick-6])paint(c,xx,yy+1,3,2,p.trim);
+      }
+      if(key==='greatclub')for(const xx of [-12,8]){
+        outlined(c,[[xx-3,-tall-14],[xx+3,-tall-24],[xx+6,-tall-12]],p.metal,2);
+      }
+    }else if(isFlail){
+      // Chain and spiked head hang on the outside of the arm, away from face.
+      c.save();c.scale(-1,1);
+      paint(c,-3,-tall+7,6,20,p.metal);
+      for(let i=0;i<5;i++){
+        const a=-10-i*4,b=-tall-2-i*7;
+        outlined(c,[[a,b],[a+7,b],[a+7,b+5],[a,b+5]],p.metal,2);
+      }
+      outlined(c,[[-33,-tall-54],[-17,-tall-62],[-3,-tall-51],[-4,-tall-36],[-18,-tall-28],[-34,-tall-35]],p.metalDark,3);
+      poly(c,[[-27,-tall-52],[-17,-tall-57],[-8,-tall-50],[-10,-tall-39],[-19,-tall-34],[-29,-tall-38]],p.metal);
+      for(const [a,b] of [[-18,-63],[-34,-48],[-1,-47],[-31,-29],[-10,-28]]){
+        poly(c,[[a-3,b-tall],[a+3,b-tall-10],[a+8,b-tall]],p.light);
+      }
+      c.restore();
+    }else if(isMace){
+      outlined(c,[[-12,-tall-18],[9,-tall-18],[19,-tall-3],[13,-tall+19],[-13,-tall+19],[-19,-tall-3]],p.metalDark,3);
+      poly(c,[[-9,-tall-14],[8,-tall-14],[13,-tall-3],[9,-tall+14],[-10,-tall+14],[-14,-tall-3]],p.metal);
+      for(const xx of [-10,3])paint(c,xx,-tall-9,6,4,p.light);
+      if(key==='morningstar')for(const a of [-16,-3,14]){
+        poly(c,[[a-5,-tall-10],[a,-tall-27],[a+7,-tall-10]],p.light);
+        poly(c,[[a-5,-tall+9],[a,-tall+23],[a+7,-tall+9]],p.metal);
+      }
+      paint(c,-15,-tall+1,30,3,p.trim);
+    }
+    if(rank!=='basic'&&!isFlail)gearEtching(c,rank,0,-tall+14,p);
+  }else if(key==='whip'){
+    weaponPole(c,-27,24,p,6);
+    outlined(c,[[2,-24],[12,-42],[28,-57],[43,-58],[55,-49],[62,-32],[57,-15],[63,0],[59,20],[53,21],[55,0],[49,-15],[53,-34],[45,-48],[30,-48],[18,-35],[6,-17]],p.leather,3);
+    poly(c,[[10,-30],[28,-51],[45,-52],[56,-44],[58,-34],[50,-45],[31,-46],[16,-27]],p.grain);
+    paint(c,57,15,4,9,p.trim);
+  }else if(key==='blowgun'){
+    weaponPole(c,-125,22,p,5);
+    paint(c,-6,-120,12,6,p.metal);
+    paint(c,-7,-28,14,9,p.leather);
+    paint(c,-3,-119,2,90,p.light);
+    paint(c,-4,-90,8,3,p.trim);
+  }else if(['pistol','musket'].includes(key)){
+    const musket=key==='musket';
+    if(musket){
+      // Long flintlock angled upward within the stage, with wooden stock.
+      outlined(c,[[-9,18],[4,18],[13,4],[20,-29],[37,-113],[26,-116],[5,-29]],p.wood,3);
+      outlined(c,[[24,-115],[36,-115],[45,-126],[36,-130],[26,-126]],p.metalDark,2);
+      poly(c,[[26,-117],[33,-116],[43,-126],[35,-126]],p.light);
+      paint(c,19,-56,8,20,p.metal);paint(c,13,-30,8,9,p.trim);
+      outlined(c,[[2,-11],[16,-17],[24,-8],[15,2]],p.metalDark,2);
+      paint(c,5,-10,10,3,p.trim);
+      outlined(c,[[0,-8],[-7,-2],[-8,20],[4,20]],p.leather,2);
+    }else{
+      outlined(c,[[-8,-8],[8,-8],[10,13],[1,24],[-10,20]],p.wood,3);
+      outlined(c,[[-7,-22],[40,-22],[43,-13],[35,-8],[-9,-8]],p.metalDark,3);
+      poly(c,[[-4,-20],[37,-20],[39,-16],[-4,-15]],p.metal);
+      paint(c,-1,-19,28,3,p.light);paint(c,31,-14,10,3,p.trim);
+      outlined(c,[[6,-7],[16,-8],[15,6],[4,5]],p.trim,2);
+      paint(c,4,8,4,11,p.grain);
+      gearGem(c,2,-9,p,3);
+    }
+  }else{
+    // Unknown legacy entry: a safe, crafted shortblade with an actual handle.
+    weaponMetalBlade(c,82,8,p,rank);
+    weaponHilt(c,p,rank);
+  }
+  c.restore();
+}
+
 function drawItemIcon(canvas,item){
   if(!canvas||!item)return;
   canvas.width=88;canvas.height=88;
@@ -1302,13 +1805,18 @@ function drawItemIcon(canvas,item){
   paint(c,4,4,80,4,r.glow);paint(c,4,80,80,4,r.glow);
   paint(c,9,74,70,2,'#b5aba0');
   if(item.type==='weapon'){
-    c.save();c.translate(-10,-1);c.scale(.46,.46);
-    drawWeapon(c,item,118,169);c.restore();
+    const key=item.baseKey||item.shape;
+    const short=['dagger','dart','pistol','sling','handaxe','light-hammer'].includes(key);
+    const long=['pike','halberd','glaive','trident','greatsword','starblade','lance','spear','greataxe','greatclub','musket','flail','longbow','heavy-crossbow'].includes(key);
+    const scale=short?.69:long?.43:.52;
+    c.save();c.translate(44,short?62:long?72:69);c.scale(scale,scale);
+    drawWeaponV5(c,item,0,0);c.restore();
   }else if(item.type==='armor'){
-    c.save();c.translate(-4,-54);c.scale(.39,.9);
-    drawArmor(c,item,120,97,57,38);c.restore();
+    const large=['plate','halfplate','splint','carapace','aegis','regent','chain-mail'].includes(item.shape);
+    c.save();c.translate(44,15);c.scale(large?.67:.84,large?.67:.84);
+    drawArmorV5(c,item,0,0,30,20,false);c.restore();
   }else if(item.type==='shield'){
-    drawShield(c,item,44,37,.8);
+    drawShieldV5(c,item,44,39,.77);
   }else{
     c.save();c.translate(10,['dragon','griffin'].includes(item.shape)?30:12);c.scale(1,1);
     drawPet(c,item,0,2,1);c.restore();
@@ -1477,7 +1985,7 @@ function renderSettings(){
     ${renderDevPanel()}
     <section class="settings-panel"><h2>BACKUPS</h2><div class="settings-buttons"><button class="action-btn" data-action="export">EXPORT</button><button class="action-btn secondary" data-action="import">IMPORT</button></div><p class="fine-print">Progress stays in your browser. Export before clearing Safari data or switching devices.</p></section>
     <section class="settings-panel"><h2>RESET</h2><button class="action-btn danger" data-action="reset">RESET HERO DATA</button></section>
-    <p class="fine-print">HERO VERSION 4.0 · Layered pixel-art hero · D&D equipment types · Unofficial fan project.</p>`;
+    <p class="fine-print">HERO VERSION 5.0 · Redesigned equipment art · D&D equipment types · Unofficial fan project.</p>`;
 }
 
 function openEditor(){
