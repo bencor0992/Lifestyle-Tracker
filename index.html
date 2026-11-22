@@ -876,6 +876,128 @@ function heroArmorHasCape(item){
   return !!item&&(['cloak','mantle','regent'].includes(item.shape)||item.rarity==='legendary'&&['plate','carapace','aegis'].includes(item.shape));
 }
 
+// The original four evolution sprites are single flattened paintings. Cut each
+// one into independently transformable head, torso, upper/lower arms, hands,
+// thighs, calves and boots. The cutouts retain their original pixel textures;
+// their transparent negative is a separate pelvis/backfill layer. Everything
+// is cached once so the animation never scans pixels or allocates per frame.
+const HERO_RIG_POLYGONS={
+  head:[[95,18],[185,18],[186,67],[174,82],[157,93],[133,95],[117,86],[99,82]],
+  torso:[[108,78],[159,78],[165,96],[160,119],[154,146],[154,158],[112,158],[106,135],[104,102]],
+  // Just 2-4px of overlap at elbows, wrists, knees and ankles: enough to
+  // hide seams without showing a second fist or boot during a joint bend.
+  leftUpper:[[98,82],[125,82],[128,104],[117,132],[95,134],[91,117]],
+  leftLower:[[92,127],[119,127],[117,150],[115,154],[93,154],[89,146]],
+  leftHand:[[93,150],[117,150],[121,182],[91,182]],
+  rightUpper:[[145,82],[175,82],[179,111],[182,133],[155,134],[146,115]],
+  rightLower:[[151,128],[185,128],[187,150],[186,154],[155,154]],
+  rightHand:[[153,150],[189,150],[193,182],[151,182]],
+  // The upper legs start at the waistband, *inside* the hanging hands. Their
+  // masks only widen below the fists, otherwise a second static hand appears.
+  leftThigh:[[111,140],[141,140],[143,177],[138,212],[95,213],[97,201],[105,184],[109,164]],
+  leftCalf:[[93,208],[141,208],[142,242],[93,245]],
+  leftFoot:[[88,239],[142,239],[142,274],[88,274]],
+  rightThigh:[[130,139],[165,139],[166,177],[181,207],[185,212],[126,213]],
+  rightCalf:[[126,208],[186,208],[189,243],[127,245]],
+  rightFoot:[[125,239],[197,239],[197,274],[125,274]],
+};
+const HERO_RIG_JOINTS=[
+  {hip:[133,150],neck:[141,85],leftShoulder:[115,95],leftElbow:[105,130],leftWrist:[107,151],rightShoulder:[151,96],rightElbow:[150,132],rightWrist:[153,151],leftHip:[117,156],leftKnee:[111,207],leftAnkle:[107,234],rightHip:[143,157],rightKnee:[145,207],rightAnkle:[145,234]},
+  {hip:[134,150],neck:[140,83],leftShoulder:[113,94],leftElbow:[106,131],leftWrist:[105,151],rightShoulder:[156,94],rightElbow:[157,130],rightWrist:[159,151],leftHip:[119,157],leftKnee:[111,208],leftAnkle:[110,234],rightHip:[147,157],rightKnee:[149,210],rightAnkle:[150,234]},
+  {hip:[135,148],neck:[141,81],leftShoulder:[112,92],leftElbow:[104,129],leftWrist:[104,151],rightShoulder:[158,91],rightElbow:[162,128],rightWrist:[167,151],leftHip:[117,156],leftKnee:[111,207],leftAnkle:[108,232],rightHip:[151,155],rightKnee:[152,208],rightAnkle:[154,233]},
+  {hip:[136,147],neck:[142,80],leftShoulder:[108,91],leftElbow:[102,130],leftWrist:[104,151],rightShoulder:[160,90],rightElbow:[164,128],rightWrist:[171,151],leftHip:[119,155],leftKnee:[113,206],leftAnkle:[107,232],rightHip:[155,155],rightKnee:[156,209],rightAnkle:[156,232]},
+];
+const heroRigCache=new Map();
+function heroRigPolygon(c,points,dx=0,dy=0){
+  c.beginPath();c.moveTo(points[0][0]-dx,points[0][1]-dy);
+  for(let i=1;i<points.length;i++)c.lineTo(points[i][0]-dx,points[i][1]-dy);
+  c.closePath();
+}
+function heroRigCutout(sprite,points){
+  const x=Math.max(0,Math.floor(Math.min(...points.map(p=>p[0]))-2));
+  const y=Math.max(0,Math.floor(Math.min(...points.map(p=>p[1]))-2));
+  const right=Math.min(240,Math.ceil(Math.max(...points.map(p=>p[0]))+2));
+  const bottom=Math.min(320,Math.ceil(Math.max(...points.map(p=>p[1]))+2));
+  const canvas=document.createElement('canvas');canvas.width=right-x;canvas.height=bottom-y;
+  const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  heroRigPolygon(ctx,points,x,y);ctx.clip();ctx.drawImage(sprite,-x,-y);
+  return {image:canvas,x,y};
+}
+function heroRigForStage(atlas,stage){
+  const cached=heroRigCache.get(stage);
+  if(cached?.atlas===atlas)return cached;
+  const sprite=document.createElement('canvas');sprite.width=240;sprite.height=320;
+  const s=sprite.getContext('2d');s.imageSmoothingEnabled=false;
+  const w=atlas.naturalWidth/2,h=atlas.naturalHeight/2;
+  s.drawImage(atlas,(stage%2)*w,Math.floor(stage/2)*h,w,h,(stage%2)*40,28,240,257);
+  const parts={};
+  for(const [name,points] of Object.entries(HERO_RIG_POLYGONS))parts[name]=heroRigCutout(sprite,points);
+  const residual=document.createElement('canvas');residual.width=240;residual.height=320;
+  const rc=residual.getContext('2d');rc.drawImage(sprite,0,0);
+  rc.globalCompositeOperation='destination-out';
+  for(const points of Object.values(HERO_RIG_POLYGONS)){
+    heroRigPolygon(rc,points);rc.fillStyle='#000';rc.fill();
+  }
+  rc.globalCompositeOperation='source-over';
+  parts.residual={image:residual,x:0,y:0};
+  const rig={atlas,parts,joints:HERO_RIG_JOINTS[stage],stage};
+  heroRigCache.set(stage,rig);return rig;
+}
+function heroRigDrawPart(c,part){c.drawImage(part.image,part.x,part.y);}
+function heroRigRotate(c,joint,angle){
+  c.translate(joint[0],joint[1]);c.rotate(angle);c.translate(-joint[0],-joint[1]);
+}
+function heroRigArm(c,rig,side,shoulder,elbow,wrist,upperAngle,lowerAngle,handAngle){
+  const p=rig.parts,j=rig.joints;
+  c.save();heroRigRotate(c,j[shoulder],upperAngle);
+  heroRigDrawPart(c,p[side+'Upper']);
+  c.save();heroRigRotate(c,j[elbow],lowerAngle);
+  heroRigDrawPart(c,p[side+'Lower']);
+  c.save();heroRigRotate(c,j[wrist],handAngle);
+  heroRigDrawPart(c,p[side+'Hand']);
+  c.restore();c.restore();c.restore();
+}
+function heroRigLeg(c,rig,side,hip,knee,ankle,upperAngle,lowerAngle,footAngle){
+  const p=rig.parts,j=rig.joints;
+  c.save();heroRigRotate(c,j[hip],upperAngle);
+  heroRigDrawPart(c,p[side+'Thigh']);
+  c.save();heroRigRotate(c,j[knee],lowerAngle);
+  heroRigDrawPart(c,p[side+'Calf']);
+  c.save();heroRigRotate(c,j[ankle],footAngle);
+  heroRigDrawPart(c,p[side+'Foot']);
+  c.restore();c.restore();c.restore();
+}
+function drawArticulatedHero(c,atlas,stage,stats,time=0){
+  const rig=heroRigForStage(atlas,stage),p=rig.parts,j=rig.joints;
+  const e=idleMotion(stats,time),power=e.energy,s=e.stamina,f=e.focus;
+  const freq=.75+power*1.25,phase=time*freq*2*Math.PI;
+  const sway=Math.sin(phase),counter=Math.sin(phase+Math.PI);
+  const strength=.018+power*.055;
+  // An occasional stretch only occurs in high-stat poses. Lower levels sag.
+  const stretch=power>.55?Math.pow(Math.max(0,Math.sin(time*.67-1)),8)*((power-.55)/.45):0;
+  const torsoAngle=(1-s)*.013+Math.sin(phase*.5)*(.005+power*.015);
+  const headAngle=(1-f)*.022+Math.sin(phase*.62+.9)*(.008+power*.045)-stretch*.03;
+  const leftUpper=sway*strength-stretch*.12, rightUpper=counter*strength+stretch*.20;
+  const leftLower=Math.sin(phase+.7)*(.022+power*.11)+stretch*.12;
+  const rightLower=Math.sin(phase+2)*(.024+power*.13)-stretch*.22;
+  const leftThigh=Math.sin(phase*.5)*(.007+power*.025),rightThigh=-leftThigh;
+  const leftKnee=Math.sin(phase*.5+.75)*(.012+power*.055);
+  const rightKnee=Math.sin(phase*.5+2.1)*(.012+power*.055);
+  heroRigDrawPart(c,p.residual);
+  // Hips/legs are independent of the breathing torso, with knee and ankle
+  // transforms nested under the rotating thigh/shin respectively.
+  heroRigLeg(c,rig,'left','leftHip','leftKnee','leftAnkle',leftThigh,leftKnee,-leftKnee*.65);
+  heroRigLeg(c,rig,'right','rightHip','rightKnee','rightAnkle',rightThigh,rightKnee,-rightKnee*.65);
+  c.save();heroRigRotate(c,j.hip,torsoAngle);
+  heroRigDrawPart(c,p.torso);
+  heroRigArm(c,rig,'left','leftShoulder','leftElbow','leftWrist',leftUpper,leftLower,Math.sin(phase+.2)*(.01+power*.05));
+  c.save();heroRigRotate(c,j.neck,headAngle);
+  heroRigDrawPart(c,p.head);
+  c.restore();
+  heroRigArm(c,rig,'right','rightShoulder','rightElbow','rightWrist',rightUpper,rightLower,Math.sin(phase+1)*(.01+power*.05));
+  c.restore();
+}
+
 function drawSpriteHero(c,stats,armor,weapon,shield,pet,time=0){
   const atlas=loadedAtlas('hero-health-atlas');
   if(!atlas)return false;
@@ -894,8 +1016,11 @@ function drawSpriteHero(c,stats,armor,weapon,shield,pet,time=0){
   c.translate(127,274);c.transform(1,0,-.16*(1-s),1,0,0);c.translate(-127,-274);
   c.translate(129,0);c.scale(scaleX,1);c.translate(-129,0);
   if(heroArmorHasCape(armor))cloak(c,armor,s,visualPower(health));
-  const w=atlas.naturalWidth/2,h=atlas.naturalHeight/2;
-  c.drawImage(atlas,(stage%2)*w,Math.floor(stage/2)*h,w,h,(stage%2)*40,28+7*(1-s),240,257-7*(1-s));
+  // Fit the neutral cutouts to the same Stamina-dependent bounding box as V9.
+  const verticalScale=(257-7*(1-s))/257;
+  c.save();c.translate(0,7*(1-s));c.translate(0,28);c.scale(1,verticalScale);c.translate(0,-28);
+  drawArticulatedHero(c,atlas,stage,stats,time);
+  c.restore();
   // The face is left entirely as painted in the original art. Drawing stat
   // indicators onto eye/nose coordinates caused the purple obstructions.
   if(armor)drawArmorV5(c,armor,129,105,27+Math.round(visualPower(health)*7),20,true);
