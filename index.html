@@ -889,19 +889,12 @@ function heroArmorHasCape(item){
   return !!item&&(['cloak','mantle','regent'].includes(item.shape)||item.rarity==='legendary'&&['plate','carapace','aegis'].includes(item.shape));
 }
 
-// The art is a *flattened* painting, not an actual layered skeleton. The old
-// overlapping polygon rig grabbed trouser pixels in the forearms and copied
-// a fist into the right thigh. Instead, give every moving pixel exactly one
-// owner: skin-aware upper arm, forearm, hand or head. Everything else,
-// INCLUDING THE ENTIRE PAIR OF PANTS, stays in one grounded base image.
-// Bounds are tuned for each evolution silhouette and never reach the pants.
-const HERO_RIG_HEAD=[[95,18],[185,18],[186,63],[171,76],[158,83],[154,91],[137,91],[132,83],[115,78],[98,72]];
-const HERO_RIG_ARM_BOUNDS=[
-  {left:[[97,117],[96,116],[97,117]],right:[[140,159],[141,162],[143,166]]},
-  {left:[[97,116],[96,117],[98,118]],right:[[146,166],[147,171],[149,175]]},
-  {left:[[95,115],[94,116],[96,117]],right:[[149,171],[151,176],[154,181]]},
-  {left:[[92,115],[93,116],[95,117]],right:[[150,177],[152,183],[156,188]]},
-];
+// These characters were painted as a SINGLE flattened sprite, with no art
+// beneath each arm. Cutting out and rotating separate layers made holes at
+// their shoulders, elbows, wrists and fingers. Instead we deform the existing
+// continuous pixels with a gentle joint-controlled mesh. Every output pixel
+// has exactly one source pixel; the limbs never expose cutout transparency,
+// duplicate hands, or pull chunks of trousers along behind an arm.
 const HERO_RIG_JOINTS=[
   {hip:[133,150],neck:[141,85],leftShoulder:[115,95],leftElbow:[105,130],leftWrist:[107,151],rightShoulder:[151,96],rightElbow:[150,132],rightWrist:[153,151],leftHip:[117,156],leftKnee:[111,207],leftAnkle:[107,234],rightHip:[143,157],rightKnee:[145,207],rightAnkle:[145,234]},
   {hip:[134,150],neck:[140,83],leftShoulder:[113,94],leftElbow:[106,131],leftWrist:[105,151],rightShoulder:[156,94],rightElbow:[157,130],rightWrist:[159,151],leftHip:[119,157],leftKnee:[111,208],leftAnkle:[110,234],rightHip:[147,157],rightKnee:[149,210],rightAnkle:[150,234]},
@@ -909,42 +902,6 @@ const HERO_RIG_JOINTS=[
   {hip:[136,147],neck:[142,80],leftShoulder:[108,91],leftElbow:[102,130],leftWrist:[104,151],rightShoulder:[160,90],rightElbow:[164,128],rightWrist:[171,151],leftHip:[119,155],leftKnee:[113,206],leftAnkle:[107,232],rightHip:[155,155],rightKnee:[156,209],rightAnkle:[156,232]},
 ];
 const heroRigCache=new Map();
-function heroRigPolygon(c,points,dx=0,dy=0){
-  c.beginPath();c.moveTo(points[0][0]-dx,points[0][1]-dy);
-  for(let i=1;i<points.length;i++)c.lineTo(points[i][0]-dx,points[i][1]-dy);
-  c.closePath();
-}
-function heroRigInsidePolygon(x,y,points){
-  let inside=false;
-  for(let i=0,j=points.length-1;i<points.length;j=i++){
-    const a=points[i],b=points[j];
-    if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])inside=!inside;
-  }
-  return inside;
-}
-function heroRigPartFromPixels(pixels,owned,id){
-  let x0=240,y0=320,x1=-1,y1=-1;
-  for(let y=0;y<320;y++)for(let x=0;x<240;x++)if(owned[y*240+x]===id){
-    x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);
-  }
-  if(x1<0){const empty=document.createElement('canvas');empty.width=1;empty.height=1;return {image:empty,x:0,y:0};}
-  const image=document.createElement('canvas');image.width=x1-x0+1;image.height=y1-y0+1;
-  const ctx=image.getContext('2d');const rgba=ctx.createImageData(image.width,image.height);
-  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
-    if(owned[y*240+x]!==id)continue;
-    const src=(y*240+x)*4,dst=((y-y0)*image.width+x-x0)*4;
-    rgba.data[dst]=pixels[src];rgba.data[dst+1]=pixels[src+1];
-    rgba.data[dst+2]=pixels[src+2];rgba.data[dst+3]=pixels[src+3];
-  }
-  ctx.putImageData(rgba,0,0);
-  return {image,x:x0,y:y0};
-}
-function heroRigArmRange(stage,side,y){
-  if(y<84||y>174)return null;
-  const bounds=HERO_RIG_ARM_BOUNDS[stage][side];
-  const index=y<122?0:y<146?1:2;
-  return bounds[index];
-}
 function heroRigForStage(atlas,stage){
   const cached=heroRigCache.get(stage);
   if(cached?.atlas===atlas)return cached;
@@ -952,97 +909,73 @@ function heroRigForStage(atlas,stage){
   const s=sprite.getContext('2d');s.imageSmoothingEnabled=false;
   const w=atlas.naturalWidth/2,h=atlas.naturalHeight/2;
   s.drawImage(atlas,(stage%2)*w,Math.floor(stage/2)*h,w,h,(stage%2)*40,28,240,257);
-  const pixels=s.getImageData(0,0,240,320).data;
-  const owned=new Uint8Array(240*320);
-  // A conservative cut around the face; neither shoulder nor chest is cut.
-  for(let y=18;y<92;y++)for(let x=95;x<187;x++){
-    const n=y*240+x;
-    if(pixels[n*4+3]>0&&heroRigInsidePolygon(x+.5,y+.5,HERO_RIG_HEAD))owned[n]=1;
-  }
-  for(const [side,base] of [['left',2],['right',5]]){
-    const seeds=new Uint8Array(240*320);
-    for(let y=84;y<=174;y++){
-      const range=heroRigArmRange(stage,side,y);
-      if(!range)continue;
-      for(let x=range[0];x<=range[1];x++){
-        const n=y*240+x,k=n*4,r=pixels[k],g=pixels[k+1],b=pixels[k+2];
-        // Ochre skin, including its warm shadow tones; no violet trousers.
-        if(!owned[n]&&pixels[k+3]>24&&r>103&&r-g>18&&g-b>7&&r-b>38)seeds[n]=1;
-      }
-    }
-    // Grow by a pixel or two to carry each limb's black pixel outline along.
-    // This is constrained to the arm corridor and never cuts the trouser legs.
-    for(let y=84;y<=174;y++){
-      const range=heroRigArmRange(stage,side,y);
-      for(let x=range[0];x<=range[1];x++){
-        const n=y*240+x;
-        if(owned[n]||!pixels[n*4+3])continue;
-        let adjacent=false;
-        const radius=y>139?1:2;
-        for(let oy=-radius;oy<=radius&&!adjacent;oy++)for(let ox=-radius;ox<=radius;ox++){
-          const nx=x+ox,ny=y+oy;
-          if(nx>=0&&nx<240&&ny>=0&&ny<320&&seeds[ny*240+nx]){adjacent=true;break;}
-        }
-        if(!adjacent)continue;
-        const elbow=HERO_RIG_JOINTS[stage][side+'Elbow'][1];
-        const wrist=HERO_RIG_JOINTS[stage][side+'Wrist'][1];
-        owned[n]=y<elbow?base:y<wrist?base+1:base+2;
-      }
-    }
-  }
-  const parts={
-    head:heroRigPartFromPixels(pixels,owned,1),
-    leftUpper:heroRigPartFromPixels(pixels,owned,2),
-    leftLower:heroRigPartFromPixels(pixels,owned,3),
-    leftHand:heroRigPartFromPixels(pixels,owned,4),
-    rightUpper:heroRigPartFromPixels(pixels,owned,5),
-    rightLower:heroRigPartFromPixels(pixels,owned,6),
-    rightHand:heroRigPartFromPixels(pixels,owned,7),
+  const frame=document.createElement('canvas');frame.width=240;frame.height=320;
+  const frameCtx=frame.getContext('2d');frameCtx.imageSmoothingEnabled=false;
+  const rig={
+    atlas,stage,joints:HERO_RIG_JOINTS[stage],
+    original:new Uint8ClampedArray(s.getImageData(0,0,240,320).data),
+    frame,frameCtx,framePixels:frameCtx.createImageData(240,320),
   };
-  const residual=document.createElement('canvas');residual.width=240;residual.height=320;
-  const rc=residual.getContext('2d');const remainder=rc.createImageData(240,320);
-  for(let n=0;n<owned.length;n++)if(!owned[n]){
-    const k=n*4;remainder.data[k]=pixels[k];remainder.data[k+1]=pixels[k+1];
-    remainder.data[k+2]=pixels[k+2];remainder.data[k+3]=pixels[k+3];
-  }
-  rc.putImageData(remainder,0,0);
-  parts.residual={image:residual,x:0,y:0};
-  const rig={atlas,parts,joints:HERO_RIG_JOINTS[stage],stage};
   heroRigCache.set(stage,rig);return rig;
 }
-function heroRigDrawPart(c,part){c.drawImage(part.image,part.x,part.y);}
-function heroRigRotate(c,joint,angle){
-  c.translate(joint[0],joint[1]);c.rotate(angle);c.translate(-joint[0],-joint[1]);
+function heroEase(value){
+  const t=Math.max(0,Math.min(1,value));return t*t*(3-2*t);
 }
-function heroRigArm(c,rig,side,shoulder,elbow,wrist,upperAngle,lowerAngle,handAngle){
-  const p=rig.parts,j=rig.joints;
-  c.save();heroRigRotate(c,j[shoulder],upperAngle);
-  heroRigDrawPart(c,p[side+'Upper']);
-  c.save();heroRigRotate(c,j[elbow],lowerAngle);
-  heroRigDrawPart(c,p[side+'Lower']);
-  c.save();heroRigRotate(c,j[wrist],handAngle);
-  heroRigDrawPart(c,p[side+'Hand']);
-  c.restore();c.restore();c.restore();
+function heroArmDisplacement(x,y,joints,side,elbowOffset,wristOffset){
+  const shoulder=joints[side+'Shoulder'],elbow=joints[side+'Elbow'],wrist=joints[side+'Wrist'];
+  if(y<shoulder[1]-13||y>178)return 0;
+  let center,offset;
+  if(y<shoulder[1]){
+    center=shoulder[0];offset=0;
+  }else if(y<=elbow[1]){
+    const t=heroEase((y-shoulder[1])/(elbow[1]-shoulder[1]));
+    center=shoulder[0]+(elbow[0]-shoulder[0])*t;
+    offset=elbowOffset*t;
+  }else if(y<=wrist[1]){
+    const t=heroEase((y-elbow[1])/(wrist[1]-elbow[1]));
+    center=elbow[0]+(wrist[0]-elbow[0])*t;
+    offset=elbowOffset+(wristOffset-elbowOffset)*t;
+  }else{
+    center=wrist[0]+(wrist[0]-elbow[0])*.008*(y-wrist[1]);
+    offset=wristOffset;
+  }
+  // Move the limb AND its silhouette outline together, fading smoothly into
+  // the unmoving torso and fading entirely above the trousers.
+  const radius=y<119?12:10;
+  const xWeight=1-heroEase((Math.abs(x-center)-radius+3)/7);
+  const topWeight=heroEase((y-shoulder[1]+13)/13);
+  const bottomWeight=1-heroEase((y-164)/14);
+  return offset*xWeight*topWeight*bottomWeight;
 }
 function drawArticulatedHero(c,atlas,stage,stats,time=0){
-  const rig=heroRigForStage(atlas,stage),p=rig.parts,j=rig.joints;
-  const e=idleMotion(stats,time),power=e.energy,s=e.stamina,f=e.focus;
+  const rig=heroRigForStage(atlas,stage),j=rig.joints;
+  const e=idleMotion(stats,time),power=e.energy,f=e.focus;
   const phase=time*(.63+power*.36)*2*Math.PI;
-  // Subtle weight shifts and small counterbalanced arm swings look more like
-  // breathing than high-amplitude marches or sudden arm-stretch poses.
-  const sway=Math.sin(phase),counter=Math.sin(phase+Math.PI);
-  const armAmplitude=.008+power*.026;
-  const headAngle=(1-f)*.016+Math.sin(phase*.5+.65)*(.006+power*.012);
-  const leftUpper=sway*armAmplitude,rightUpper=counter*armAmplitude;
-  const leftLower=Math.sin(phase+.65)*(.006+power*.018);
-  const rightLower=Math.sin(phase+2.2)*(.006+power*.018);
-  heroRigDrawPart(c,p.residual);
-  // Trousers, belt, boots and torso are *only* in the stationary residual.
-  heroRigArm(c,rig,'left','leftShoulder','leftElbow','leftWrist',leftUpper,leftLower,0);
-  c.save();heroRigRotate(c,j.neck,headAngle);
-  heroRigDrawPart(c,p.head);
-  c.restore();
-  heroRigArm(c,rig,'right','rightShoulder','rightElbow','rightWrist',rightUpper,rightLower,0);
+  const sway=Math.sin(phase);
+  const leftElbow=(.2+power*.8)*sway;
+  const leftWrist=leftElbow+(.2+power*.55)*Math.sin(phase+.7);
+  const rightElbow=-(.2+power*.8)*sway;
+  const rightWrist=rightElbow-(.2+power*.55)*Math.sin(phase+1.9);
+  const headAngle=(1-f)*.012+Math.sin(phase*.5+.65)*(.006+power*.012);
+  const original=rig.original,out=rig.framePixels.data;
+  out.set(original);
+  for(let y=23;y<179;y++)for(let x=83;x<198;x++){
+    const headEdge=heroEase((y-23)/7)*(1-heroEase((y-79)/15));
+    const headSide=1-heroEase((Math.abs(x-j.neck[0])-38)/14);
+    const headWeight=headEdge*headSide;
+    const dx=heroArmDisplacement(x,y,j,'left',leftElbow,leftWrist)
+      +heroArmDisplacement(x,y,j,'right',rightElbow,rightWrist)
+      -(y-j.neck[1])*headAngle*headWeight;
+    const dy=(x-j.neck[0])*headAngle*headWeight;
+    if(Math.abs(dx)<.03&&Math.abs(dy)<.03)continue;
+    const sx=Math.max(0,Math.min(239,Math.round(x-dx)));
+    const sy=Math.max(0,Math.min(319,Math.round(y-dy)));
+    const src=(sy*240+sx)*4,dst=(y*240+x)*4;
+    out[dst]=original[src];out[dst+1]=original[src+1];
+    out[dst+2]=original[src+2];out[dst+3]=original[src+3];
+  }
+  rig.frameCtx.putImageData(rig.framePixels,0,0);
+  c.drawImage(rig.frame,0,0);
 }
 
 function drawSpriteHero(c,stats,armor,weapon,shield,pet,time=0){
